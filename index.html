@@ -23,11 +23,11 @@
 
         body {
             font-family: 'Assistant', sans-serif;
-            /* Enhanced Washed Out World Map */
-            background: 
-                linear-gradient(rgba(240, 235, 225, 0.9), rgba(240, 235, 225, 0.9)),
-                url('https://www.transparenttextures.com/patterns/world-map.png'),
-                #e5e0d8;
+            /* Improved Visibility for World Map Background */
+            background-color: #e5e0d8;
+            background-image: 
+                linear-gradient(rgba(240, 235, 225, 0.85), rgba(240, 235, 225, 0.85)),
+                url('https://www.transparenttextures.com/patterns/world-map.png');
             background-size: cover;
             display: flex; flex-direction: column; align-items: center;
         }
@@ -42,7 +42,7 @@
         h1 { color: var(--navy); margin: 5px; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
 
         .instruction-box {
-            background: rgba(255, 255, 255, 0.8); border: 2px dashed var(--gold);
+            background: rgba(255, 255, 255, 0.9); border: 2px dashed var(--gold);
             color: var(--navy); padding: 10px; border-radius: 8px;
             margin: 10px auto; width: 90%; font-weight: 800;
         }
@@ -73,25 +73,20 @@
         }
 
         #game-board {
-            display: none; grid-template-columns: 1fr 1.5fr; gap: 10px;
-            width: 95%; max-width: 800px; height: 60vh;
+            display: none; grid-template-columns: 1fr 1.8fr; gap: 10px;
+            width: 95%; max-width: 850px; height: 62vh;
         }
 
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
         
-        .flag-unit { 
-            display: flex; align-items: center; gap: 10px; height: 11%; 
-            position: relative;
-        }
+        .flag-unit { display: flex; align-items: center; gap: 10px; height: 11%; }
 
-        /* FIX: Prevents the flag from warping or changing size during drag */
         .flag-card {
-            width: 70px; height: 45px; /* Fixed physical size */
+            width: 70px; height: 45px;
             background: white; border-radius: 5px; border: 2px solid #444;
             display: flex; align-items: center; justify-content: center;
             font-size: 2rem; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             z-index: 10; touch-action: none;
-            user-select: none;
         }
 
         .big-audio-btn {
@@ -103,11 +98,16 @@
         .name-slot {
             height: 11%; width: 100%; background: var(--paper); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; font-family: 'Montserrat', sans-serif;
-            font-size: 1.1rem; text-transform: uppercase; text-align: center;
+            color: white; font-weight: 800; font-family: 'Assistant', sans-serif;
+            font-size: 1rem; text-transform: uppercase; text-align: center;
+            padding: 0 10px; transition: background 0.3s;
         }
 
-        .name-slot.correct { background: #27ae60 !important; }
+        .name-slot.correct { 
+            background: #27ae60 !important; 
+            font-size: 0.95rem; 
+            justify-content: space-between;
+        }
 
         .btn-main {
             background: var(--gold); color: white; border: none;
@@ -155,16 +155,16 @@
 
     <div id="win-modal" style="display:none;">
         <h1 style="font-size: 3rem; color: var(--gold);">EXCELLENT!</h1>
-        <h2>כל הכבוד</h2>
+        <h2 style="font-size: 2rem;">כל הכבוד</h2>
         <button class="btn-main" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
     <script>
         const database = {
-            1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
-            2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
-            3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
-            4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
+            1: [{e:"🇦🇷", n:"Argentina", h:"ארגנטינה"}, {e:"🇦🇺", n:"Australia", h:"אוסטרליה"}, {e:"🇧🇷", n:"Brazil", h:"ברזיל"}, {e:"🇨🇦", n:"Canada", h:"קנדה"}, {e:"🇨🇴", n:"Colombia", h:"קולומביה"}, {e:"🇲🇽", n:"Mexico", h:"מקסיקו"}, {e:"🇵🇦", n:"Panama", h:"פנמה"}, {e:"🇺🇸", n:"America", h:"ארה״ב"}],
+            2: [{e:"🇮🇹", n:"Italy", h:"איטליה"}, {e:"🇧🇪", n:"Belgium", h:"בלגיה"}, {e:"🇯🇵", n:"Japan", h:"יפן"}, {e:"🇷🇺", n:"Russia", h:"רוסיה"}, {e:"🇺🇦", n:"Ukraine", h:"אוקראינה"}, {e:"🇪🇹", n:"Ethiopia", h:"אתיופיה"}, {e:"🇬🇧", n:"England", h:"אנגליה"}, {e:"🇩🇪", n:"Germany", h:"גרמניה"}],
+            3: [{e:"🇿🇦", n:"South Africa", h:"דרום אפריקה"}, {e:"🇭🇺", n:"Hungary", h:"הונגריה"}, {e:"🇵🇱", n:"Poland", h:"פולין"}, {e:"🇳🇴", n:"Norway", h:"נורווגיה"}, {e:"🇹🇭", n:"Thailand", h:"תאילנד"}, {e:"🇸🇪", n:"Sweden", h:"שבדיה"}, {e:"🇨🇳", n:"China", h:"סין"}, {e:"🇮🇪", n:"Ireland", h:"אירלנד"}],
+            4: [{e:"🇪🇬", n:"Egypt", h:"מצרים"}, {e:"🇬🇷", n:"Greece", h:"יוון"}, {e:"🇨🇾", n:"Cyprus", h:"קפריסין"}, {e:"🇫🇷", n:"France", h:"צרפת"}, {e:"🇮🇳", n:"India", h:"הודו"}, {e:"🇨🇭", n:"Switzerland", h:"שוויץ"}, {e:"🇳🇱", n:"Netherlands", h:"הולנד"}, {e:"🇱🇹", n:"Lithuania", h:"ליטא"}]
         };
 
         let solved = 0, clock = 0, timerRef = null;
@@ -215,18 +215,17 @@
                 const div = document.createElement('div');
                 div.className = 'name-slot';
                 div.dataset.n = item.n;
+                div.dataset.h = item.h;
                 div.innerText = item.n;
                 nameCol.appendChild(div);
             });
         }
 
-        let dragEl = null, startX, startY, rect;
+        let dragEl = null, startX, startY;
 
         function pickup(e, el) {
             dragEl = el;
-            rect = dragEl.getBoundingClientRect();
             startX = e.clientX; startY = e.clientY;
-            
             dragEl.style.zIndex = "1000";
             dragEl.style.transition = "none";
 
@@ -247,13 +246,18 @@
                     if (ev.clientX > sRect.left && ev.clientX < sRect.right && ev.clientY > sRect.top && ev.clientY < sRect.bottom) {
                         if (s.dataset.n === dragEl.dataset.n) {
                             s.classList.add('correct');
-                            s.innerHTML = `<span style="font-size:1.6rem; margin-right:10px;">${dragEl.innerText}</span> ${s.dataset.n}`;
+                            // Shows Flag + English + Hebrew together
+                            s.innerHTML = `<span>${dragEl.innerText}</span> <span>${s.dataset.n}</span> <span style="font-weight:400">${s.dataset.h}</span>`;
                             dragEl.remove();
                             solved++;
                             document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
                             if (solved === 8) { 
-                                confetti(); clearInterval(timerRef); 
-                                setTimeout(() => { document.getElementById('win-modal').style.display = 'flex'; }, 500);
+                                clearInterval(timerRef);
+                                // 3 Second delay before victory screen pops up
+                                setTimeout(() => {
+                                    confetti(); 
+                                    document.getElementById('win-modal').style.display = 'flex';
+                                }, 3000);
                             }
                             found = true; break;
                         }
