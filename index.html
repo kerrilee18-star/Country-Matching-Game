@@ -7,81 +7,83 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --desk: #5d4037;
-            --paper: #fdfaf0;
-            --ink: #2c3e50;
-            --gold: #d4af37;
-            --success: #27ae60;
-            --fail: #c0392b;
+            --bg-soft: #e8e2d6; /* Softer, lighter parchment */
+            --paper-white: #ffffff;
+            --ink-dark: #1a1a1a; /* High contrast text */
+            --gold-accent: #b8860b;
+            --success-green: #2ecc71;
+            --error-red: #e74c3c;
         }
 
         body {
-            font-family: 'Georgia', serif;
-            background: var(--desk);
-            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-            margin: 0; padding: 10px;
+            font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-soft);
+            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
             overflow: hidden; touch-action: none;
         }
 
         .header {
-            text-align: center; color: white;
-            border-bottom: 2px solid var(--gold);
-            width: 100%; max-width: 600px;
-            padding-bottom: 10px; margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center; color: var(--ink-dark);
+            border-bottom: 3px solid var(--gold-accent);
+            width: 100%; max-width: 700px;
+            padding-bottom: 15px; margin-bottom: 30px;
         }
 
         .lvl-btn {
-            background: var(--paper); border: none; padding: 12px 25px;
-            margin: 8px; border-radius: 50px; cursor: pointer; 
-            font-weight: bold; color: var(--ink);
-            box-shadow: 0 4px 0 #999; transition: 0.2s;
+            background: var(--gold-accent); border: none; padding: 15px 30px;
+            margin: 10px; border-radius: 8px; cursor: pointer; 
+            font-weight: bold; color: white; font-size: 1.1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
         }
-        .lvl-btn:active { transform: translateY(4px); box-shadow: none; }
+        .lvl-btn:hover { transform: translateY(-2px); background: #966d09; }
 
-        .container {
-            display: flex; justify-content: space-between;
-            width: 100%; max-width: 850px; gap: 30px;
-            display: none; /* Hidden until level start */
+        /* Layout Alignment */
+        .game-container {
+            display: none; /* Hidden until start */
+            grid-template-columns: 140px 1fr; /* Fixed width for flags, flexible for names */
+            gap: 40px; width: 100%; max-width: 800px;
+            align-items: start;
         }
+
+        .column { display: flex; flex-direction: column; gap: 15px; }
 
         /* Draggable Flags */
-        .flag-pile { width: 120px; display: flex; flex-direction: column; gap: 15px; }
-        .draggable-flag {
-            width: 100px; height: 70px; background: white;
-            border-radius: 4px; border: 2px solid #ddd;
+        .flag-card {
+            width: 110px; height: 75px; background: white;
+            border-radius: 10px; border: 2px solid #ccc;
             display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; cursor: grab; position: relative;
-            box-shadow: 3px 5px 10px rgba(0,0,0,0.4);
+            font-size: 3.5rem; cursor: grab; position: relative;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
             user-select: none; z-index: 10;
         }
 
-        /* Destination Boxes */
-        .destinations { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
-        .drop-zone {
-            height: 65px; background: rgba(255, 255, 255, 0.15);
-            border: 2px dashed rgba(255,255,255,0.5);
-            border-radius: 12px; display: flex; align-items: center;
-            padding: 0 20px; color: white; font-weight: bold;
-            justify-content: space-between; position: relative;
-            transition: 0.3s; font-size: 1.2rem;
+        /* Destination Drop Zones */
+        .name-box {
+            height: 75px; background: white;
+            border: 2px dashed #999; border-radius: 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; color: var(--ink-dark); font-weight: 800;
+            position: relative; transition: 0.3s; font-size: 1.4rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .audio-btn {
-            background: var(--gold); border: none; width: 40px; height: 40px;
-            border-radius: 50%; color: white; cursor: pointer;
+        .audio-icon {
+            background: #f0f0f0; border: 2px solid #ddd; width: 45px; height: 45px;
+            border-radius: 50%; color: var(--ink-dark); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 3px 0 #937a2a; font-size: 1.2rem;
+            font-size: 1.2rem; transition: 0.2s; z-index: 20;
         }
-        .audio-btn:active { transform: translateY(2px); box-shadow: none; }
+        .audio-icon:hover { background: var(--gold-accent); color: white; border-color: var(--gold-accent); }
 
-        .drop-zone.correct {
-            background: var(--success); border-style: solid;
-            border-color: #fff; box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
+        /* Success/Error States */
+        .name-box.correct {
+            background: var(--success-green); border: 2px solid #27ae60;
+            color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
         }
 
-        .drop-zone.wrong { background: var(--fail); animation: shake 0.4s; }
+        .name-box.wrong { background: var(--error-red); border-color: #c0392b; animation: shake 0.4s; color: white; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -89,146 +91,149 @@
             75% { transform: translateX(10px); }
         }
 
-        #win-screen {
+        #win-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center;
         }
-        .stamp-box { background: white; padding: 50px; border-radius: 30px; text-align: center; border: 10px solid var(--gold); }
+        .win-modal { background: white; padding: 60px; border-radius: 25px; text-align: center; border: 8px solid var(--gold-accent); }
     </style>
 </head>
 <body>
 
-    <div id="menu" class="header">
-        <h1>✈️ Passport Pro: Global Matcher</h1>
-        <div id="level-selection"></div>
+    <div id="start-menu" class="header">
+        <h1>🌎 Global Destination Match</h1>
+        <p>Listen and Drag the Flag / הקש על הרמקול וגרור את הדגל</p>
+        <div id="lvl-picker"></div>
     </div>
 
-    <div class="container" id="game-board">
-        <div class="flag-pile" id="flag-list"></div>
-        <div class="destinations" id="zone-list"></div>
+    <div class="game-container" id="main-game">
+        <div class="column" id="flag-pile"></div>
+        <div class="column" id="name-pile"></div>
     </div>
 
-    <div id="win-screen">
-        <div class="stamp-box">
-            <h1 style="color: #2c3e50; margin-bottom: 20px;">PASSPORT STAMPED!</h1>
-            <button class="lvl-btn" onclick="location.reload()" style="background: #2c3e50; color: white;">Next Flight</button>
+    <div id="win-overlay">
+        <div class="win-modal">
+            <h1 style="font-size: 2.5rem; margin-bottom: 20px;">WELL DONE! ✈️</h1>
+            <button class="lvl-btn" onclick="location.reload()">Return to Menu</button>
         </div>
     </div>
 
     <script>
-        const worldData = {
+        const gameData = {
             1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
             2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
             3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        let draggingTag = null, offsetX, offsetY, score = 0;
+        let currentDrag = null, startX, startY, matches = 0;
 
-        function playAudio(text) { 
-            window.speechSynthesis.cancel(); 
-            const msg = new SpeechSynthesisUtterance(text); 
-            msg.lang = 'en-US'; 
-            window.speechSynthesis.speak(msg); 
+        function playSound(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
         }
 
-        function buildMenu() {
-            const menu = document.getElementById('level-selection');
+        function createMenu() {
+            const picker = document.getElementById('lvl-picker');
             for(let i=1; i<=4; i++) {
                 const b = document.createElement('button');
                 b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
-                b.onclick = () => launchGame(i);
-                menu.appendChild(b);
+                b.onclick = () => startGame(i);
+                picker.appendChild(b);
             }
         }
 
-        function launchGame(lvl) {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('game-board').style.display = 'flex';
-            const data = worldData[lvl];
+        function startGame(lvl) {
+            document.getElementById('start-menu').style.display = 'none';
+            document.getElementById('main-game').style.display = 'grid';
+            const data = gameData[lvl];
             
-            const flagsContainer = document.getElementById('flag-list');
-            const zonesContainer = document.getElementById('zone-list');
+            const flagCol = document.getElementById('flag-pile');
+            const nameCol = document.getElementById('name-pile');
 
-            // Shuffle and Create Flags
+            // Shuffle and Build
             [...data].sort(()=>Math.random()-0.5).forEach(item => {
                 const f = document.createElement('div');
-                f.className = 'draggable-flag'; f.innerText = item.e; f.dataset.country = item.n;
-                f.onpointerdown = startDrag;
-                flagsContainer.appendChild(f);
+                f.className = 'flag-card'; f.innerText = item.e; f.dataset.name = item.n;
+                f.onpointerdown = handleDragStart;
+                flagCol.appendChild(f);
             });
 
-            // Shuffle and Create Zones
             [...data].sort(()=>Math.random()-0.5).forEach(item => {
                 const z = document.createElement('div');
-                z.className = 'drop-zone'; z.dataset.country = item.n;
-                z.innerHTML = `<span>${item.n}</span> <button class="audio-btn" onpointerdown="event.stopPropagation(); playAudio('${item.n}')">🔊</button>`;
-                zonesContainer.appendChild(z);
+                z.className = 'name-box'; z.dataset.name = item.n;
+                z.innerHTML = `<span>${item.n}</span> <div class="audio-icon" onpointerdown="event.stopPropagation(); playSound('${item.n}')">🔊</div>`;
+                nameCol.appendChild(z);
             });
         }
 
-        function startDrag(e) {
-            draggingTag = e.target;
-            draggingTag.style.transition = 'none';
-            draggingTag.style.zIndex = 1000;
-            const rect = draggingTag.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
+        function handleDragStart(e) {
+            currentDrag = e.currentTarget;
+            currentDrag.style.transition = 'none';
+            currentDrag.style.zIndex = 1000;
             
-            // Set initial position for absolute movement
-            draggingTag.style.position = 'fixed';
-            draggingTag.style.left = (e.clientX - offsetX) + 'px';
-            draggingTag.style.top = (e.clientY - offsetY) + 'px';
+            const rect = currentDrag.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
 
-            document.onpointermove = moveDrag;
-            document.onpointerup = endDrag;
-            playAudio(draggingTag.dataset.country);
+            // Immediate placement
+            currentDrag.style.position = 'fixed';
+            currentDrag.style.left = (e.clientX - startX) + 'px';
+            currentDrag.style.top = (e.clientY - startY) + 'px';
+
+            document.onpointermove = handleDragMove;
+            document.onpointerup = handleDragEnd;
+            playSound(currentDrag.dataset.name);
         }
 
-        function moveDrag(e) {
-            if(!draggingTag) return;
-            draggingTag.style.left = (e.clientX - offsetX) + 'px';
-            draggingTag.style.top = (e.clientY - offsetY) + 'px';
+        function handleDragMove(e) {
+            if(!currentDrag) return;
+            currentDrag.style.left = (e.clientX - startX) + 'px';
+            currentDrag.style.top = (e.clientY - startY) + 'px';
         }
 
-        function endDrag(e) {
-            const zones = document.getElementsByClassName('drop-zone');
-            let foundMatch = false;
+        function handleDragEnd(e) {
+            const zones = document.getElementsByClassName('name-box');
+            let success = false;
 
             for (let z of zones) {
                 const r = z.getBoundingClientRect();
                 if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
-                    if (z.dataset.country === draggingTag.dataset.country && !z.classList.contains('correct')) {
-                        // Correct!
+                    if (z.dataset.name === currentDrag.dataset.name && !z.classList.contains('correct')) {
+                        // MATCH
                         z.classList.add('correct');
-                        z.innerHTML = `<span style="font-size:1.8rem">${draggingTag.innerText}</span> <span>${z.dataset.country}</span>`;
-                        draggingTag.remove();
-                        score++;
-                        playAudio("Good job!");
-                        foundMatch = true;
-                        if(score === 8) { confetti({particleCount:150}); document.getElementById('win-screen').style.display='flex'; }
+                        z.innerHTML = `<span style="font-size:2rem">${currentDrag.innerText}</span> <span>${z.dataset.name}</span>`;
+                        currentDrag.remove();
+                        matches++;
+                        playSound("Excellent");
+                        success = true;
+                        if(matches === 8) { 
+                            setTimeout(() => { confetti(); document.getElementById('win-overlay').style.display='flex'; }, 400);
+                        }
                         break;
                     } else if (!z.classList.contains('correct')) {
-                        // Wrong!
+                        // WRONG
                         z.classList.add('wrong');
                         setTimeout(() => z.classList.remove('wrong'), 500);
-                        playAudio("Try again");
+                        playSound("Try again");
                     }
                 }
             }
 
-            if (!foundMatch && draggingTag) {
-                // Reset flag position
-                draggingTag.style.transition = '0.4s';
-                draggingTag.style.position = 'relative';
-                draggingTag.style.left = '0';
-                draggingTag.style.top = '0';
-                draggingTag.style.zIndex = 10;
+            if (!success && currentDrag) {
+                currentDrag.style.transition = '0.3s';
+                currentDrag.style.position = 'relative';
+                currentDrag.style.left = '0';
+                currentDrag.style.top = '0';
+                currentDrag.style.zIndex = 10;
             }
-            draggingTag = null; document.onpointermove = null; document.onpointerup = null;
+            currentDrag = null; document.onpointermove = null; document.onpointerup = null;
         }
 
-        buildMenu();
+        createMenu();
     </script>
 </body>
 </html>
