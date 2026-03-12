@@ -15,7 +15,7 @@
             --navy: #2c3e50;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body { 
             width: 100%; height: 100%; overflow: hidden; 
@@ -32,7 +32,6 @@
             touch-action: none;
         }
 
-        /* START SCREEN */
         #unlock-screen {
             position: fixed; inset: 0; background: var(--navy); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -40,46 +39,56 @@
         }
 
         .header-container {
-            width: 100%; max-width: 800px; text-align: center; padding: 10px;
+            width: 100%; max-width: 800px; text-align: center; padding: 5px;
         }
         
-        h1 { color: var(--navy); margin: 5px 0; font-size: 1.6rem; border-bottom: 3px solid var(--gold); display: inline-block; padding: 0 15px; }
+        h1 { color: var(--navy); margin: 5px 0; font-size: 1.5rem; border-bottom: 3px solid var(--gold); display: inline-block; padding: 0 15px; }
 
         .instruction-box {
             background: rgba(255, 255, 255, 0.8);
             border: 2px dashed var(--gold);
-            color: var(--navy); padding: 10px; border-radius: 8px;
+            color: var(--navy); padding: 8px; border-radius: 8px;
             margin: 5px auto; max-width: 90%;
-            font-weight: 800; font-size: 1.1rem; line-height: 1.4;
+            font-weight: 800; font-size: 1rem;
         }
 
-        /* LEVEL BUTTONS AREA */
-        #lvl-btns {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px;
+        /* FULL WORD LEVEL BUTTONS */
+        #menu-view { width: 100%; text-align: center; }
+        .lvl-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+            width: 90%; max-width: 500px; margin: 20px auto;
         }
 
         .lvl-btn {
             background: var(--navy); color: white; border: none;
-            padding: 12px 20px; border-radius: 10px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 0 #1a252f;
-            display: flex; flex-direction: column; align-items: center; min-width: 140px;
+            padding: 20px 10px; border-radius: 12px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 5px 0 #1a252f;
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 1.1rem;
         }
-        .lvl-btn span { font-size: 0.8rem; opacity: 0.9; margin-top: 2px; }
+        .lvl-btn span { font-size: 0.9rem; opacity: 0.8; margin-top: 5px; }
+
+        /* BACK BUTTON */
+        .back-btn {
+            background: #7f8c8d; color: white; border: none;
+            padding: 8px 15px; border-radius: 20px; font-weight: bold;
+            cursor: pointer; margin-bottom: 10px; font-size: 0.9rem;
+        }
 
         #game-stats {
             display: none; width: 90%; max-width: 600px;
             justify-content: space-around; background: var(--navy);
             padding: 8px; border-radius: 30px; margin-bottom: 10px;
-            color: white; font-size: 1.1rem; font-weight: bold;
+            color: white; font-size: 1rem; font-weight: bold;
         }
 
         #game-board {
             display: none; 
             grid-template-columns: 1fr 1.5fr; 
-            gap: 12px; 
+            gap: 10px; 
             width: 95%; 
             max-width: 800px; 
-            height: 62vh; 
+            height: 60vh; 
             padding: 5px;
         }
 
@@ -95,7 +104,7 @@
         }
 
         .big-audio-btn {
-            width: 42px; height: 42px; background: var(--gold);
+            width: 44px; height: 44px; background: var(--gold);
             border-radius: 50%; border: none; color: white;
             font-size: 1.2rem; cursor: pointer; box-shadow: 0 3px 0 #7a5908;
         }
@@ -105,8 +114,7 @@
             background: var(--paper-dark); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 900; font-family: 'Montserrat', sans-serif;
-            font-size: 1.3rem; text-transform: uppercase;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            font-size: 1.2rem; text-transform: uppercase;
         }
 
         .name-slot.correct { background: #27ae60 !important; }
@@ -136,10 +144,23 @@
 
     <div class="header-container" id="game-header" style="display:none;">
         <h1>Matching Countries / התאמת מדינות</h1>
-        <div class="instruction-box">
-            Drag the flag to the matching word. / גררו את הדגל למילה המתאימה.
+        
+        <div id="menu-view">
+            <div class="instruction-box">Choose a Level / בחרו שלב</div>
+            <div class="lvl-grid">
+                <button class="lvl-btn" onclick="startLevel(1)">Level One <span>שלב ראשון</span></button>
+                <button class="lvl-btn" onclick="startLevel(2)">Level Two <span>שלב שני</span></button>
+                <button class="lvl-btn" onclick="startLevel(3)">Level Three <span>שלב שלישי</span></button>
+                <button class="lvl-btn" onclick="startLevel(4)">Level Four <span>שלב רביעי</span></button>
+            </div>
         </div>
-        <div id="lvl-btns"></div>
+
+        <div id="game-nav" style="display:none;">
+            <button class="back-btn" onclick="goBack()">⬅ BACK / חזור</button>
+            <div class="instruction-box">
+                Drag the flag to the matching word. / גררו את הדגל למילה המתאימה.
+            </div>
+        </div>
     </div>
 
     <div id="game-stats">
@@ -154,7 +175,6 @@
 
     <div id="win-modal">
         <h1 style="font-size: 3rem; color: var(--gold);">EXCELLENT! / כל הכבוד!</h1>
-        <h2 id="final-time"></h2>
         <button class="btn-main" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
@@ -166,55 +186,48 @@
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        const hebLevels = ["שלב ראשון", "שלב שני", "שלב שלישי", "שלב רביעי"];
-        const engLevels = ["Level One", "Level Two", "Level Three", "Level Four"];
-
         let dragTarget = null, grabX, grabY, solved = 0, clock = 0, timerRef = null;
 
+        // CRITICAL AUDIO FIX: This "wakes up" the speech engine immediately
+        function wakeAudio() {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+        }
+
         function initSystem() {
-            // Audio Wake-up
-            const dummy = new SpeechSynthesisUtterance(' ');
-            window.speechSynthesis.speak(dummy);
-            
+            wakeAudio();
             document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('game-header').style.display = 'block';
-            renderLevels();
         }
 
         function playVoice(txt) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(txt);
             msg.lang = 'en-US';
-            msg.rate = 0.85;
+            msg.rate = 0.8;
             window.speechSynthesis.speak(msg);
         }
 
-        function renderLevels() {
-            const container = document.getElementById('lvl-btns');
-            container.innerHTML = '';
-            for(let i=0; i<4; i++) {
-                const b = document.createElement('button');
-                b.className = 'lvl-btn';
-                b.innerHTML = `${engLevels[i]} <span>${hebLevels[i]}</span>`;
-                b.onclick = () => {
-                    // Re-unlock audio on button click to be safe
-                    const dummy = new SpeechSynthesisUtterance(' ');
-                    window.speechSynthesis.speak(dummy);
-                    startLevel(i + 1);
-                };
-                container.appendChild(b);
-            }
+        function goBack() {
+            clearInterval(timerRef);
+            document.getElementById('game-nav').style.display = 'none';
+            document.getElementById('game-stats').style.display = 'none';
+            document.getElementById('game-board').style.display = 'none';
+            document.getElementById('menu-view').style.display = 'block';
         }
 
         function startLevel(lvl) {
+            wakeAudio(); // Refresh audio permission
             solved = 0; clock = 0;
-            if(timerRef) clearInterval(timerRef);
             
-            document.getElementById('lvl-btns').style.display = 'none';
+            document.getElementById('menu-view').style.display = 'none';
+            document.getElementById('game-nav').style.display = 'block';
             document.getElementById('game-stats').style.display = 'flex';
             document.getElementById('game-board').style.display = 'grid';
             document.getElementById('score-display').innerText = `MATCHES: 0/8`;
             
+            if(timerRef) clearInterval(timerRef);
             timerRef = setInterval(() => {
                 clock++;
                 const m = Math.floor(clock / 60).toString().padStart(2, '0');
@@ -222,28 +235,23 @@
                 document.getElementById('timer-display').innerText = `TIME: ${m}:${s}`;
             }, 1000);
 
-            const items = database[lvl];
             const flagDiv = document.getElementById('flag-col');
             const nameDiv = document.getElementById('name-col');
             flagDiv.innerHTML = ''; nameDiv.innerHTML = '';
 
-            [...items].sort(()=>Math.random()-0.5).forEach(d => {
+            [...database[lvl]].sort(()=>Math.random()-0.5).forEach(d => {
                 const unit = document.createElement('div');
                 unit.className = 'flag-unit';
                 unit.dataset.country = d.n;
                 unit.innerHTML = `
                     <div class="flag-card">${d.e}</div>
-                    <button class="big-audio-btn">🔊</button>
+                    <button class="big-audio-btn" onpointerdown="event.stopPropagation(); playVoice('${d.n}')">🔊</button>
                 `;
-                unit.querySelector('.big-audio-btn').addEventListener('pointerdown', (e) => {
-                    e.stopPropagation();
-                    playVoice(d.n);
-                });
                 unit.querySelector('.flag-card').addEventListener('pointerdown', (e) => pickup(e, unit));
                 flagDiv.appendChild(unit);
             });
 
-            [...items].sort(()=>Math.random()-0.5).forEach(d => {
+            [...database[lvl]].sort(()=>Math.random()-0.5).forEach(d => {
                 const s = document.createElement('div');
                 s.className = 'name-slot'; s.dataset.country = d.n;
                 s.innerText = d.n;
@@ -253,7 +261,6 @@
 
         function pickup(e, el) {
             dragTarget = el;
-            dragTarget.style.transition = 'none';
             const r = dragTarget.getBoundingClientRect();
             grabX = e.clientX - r.left; grabY = e.clientY - r.top;
             
@@ -283,7 +290,6 @@
                             if(solved === 8) {
                                 clearInterval(timerRef);
                                 confetti();
-                                document.getElementById('final-time').innerText = document.getElementById('timer-display').innerText;
                                 document.getElementById('win-modal').style.display = 'flex';
                             }
                             break;
@@ -294,7 +300,6 @@
                     }
                 }
                 if(!matched && dragTarget) {
-                    dragTarget.style.transition = '0.3s';
                     dragTarget.style.position = 'relative';
                     dragTarget.style.left = '0'; dragTarget.style.top = '0';
                     dragTarget.style.pointerEvents = 'auto';
