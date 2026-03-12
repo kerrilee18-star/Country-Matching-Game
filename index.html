@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Global Matcher: Pro Edition</title>
+    <title>Passport Pro: Global Matcher</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --wood: #3e2723;
+            --desk: #5d4037;
             --paper: #fdfaf0;
             --ink: #2c3e50;
-            --gold: #c5a021;
-            --green: #27ae60;
-            --red: #c0392b;
+            --gold: #d4af37;
+            --success: #27ae60;
+            --fail: #c0392b;
         }
 
         body {
-            font-family: 'Segoe UI', serif;
-            background: #5d4037; /* Desk color */
+            font-family: 'Georgia', serif;
+            background: var(--desk);
             background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
             margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
@@ -25,187 +25,210 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px; border-radius: 15px; text-align: center;
-            width: 90%; max-width: 600px; color: white;
-            border: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px;
+            text-align: center; color: white;
+            border-bottom: 2px solid var(--gold);
+            width: 100%; max-width: 600px;
+            padding-bottom: 10px; margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .lvl-btn {
-            background: var(--paper); border: none; padding: 10px 20px;
-            margin: 5px; border-radius: 8px; cursor: pointer; font-weight: bold;
-            color: var(--wood); box-shadow: 0 4px 0 #999;
+            background: var(--paper); border: none; padding: 12px 25px;
+            margin: 8px; border-radius: 50px; cursor: pointer; 
+            font-weight: bold; color: var(--ink);
+            box-shadow: 0 4px 0 #999; transition: 0.2s;
+        }
+        .lvl-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        .container {
+            display: flex; justify-content: space-between;
+            width: 100%; max-width: 850px; gap: 30px;
+            display: none; /* Hidden until level start */
         }
 
-        .game-area {
-            display: flex; justify-content: space-around;
-            width: 100%; max-width: 800px; gap: 20px;
-        }
-
-        /* Draggable Tags */
-        .tag-container { width: 120px; display: flex; flex-direction: column; gap: 15px; }
-        .flag-tag {
-            width: 100px; height: 70px; background: var(--paper);
-            border-radius: 5px; border-left: 8px solid var(--gold);
+        /* Draggable Flags */
+        .flag-pile { width: 120px; display: flex; flex-direction: column; gap: 15px; }
+        .draggable-flag {
+            width: 100px; height: 70px; background: white;
+            border-radius: 4px; border: 2px solid #ddd;
             display: flex; align-items: center; justify-content: center;
             font-size: 3rem; cursor: grab; position: relative;
-            box-shadow: 2px 4px 8px rgba(0,0,0,0.4);
+            box-shadow: 3px 5px 10px rgba(0,0,0,0.4);
             user-select: none; z-index: 10;
         }
 
-        /* Drop Zones */
-        .zones-container { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
-        .name-zone {
-            height: 60px; background: rgba(0, 0, 0, 0.2);
-            border: 2px dashed rgba(255,255,255,0.4);
-            border-radius: 10px; display: flex; align-items: center;
+        /* Destination Boxes */
+        .destinations { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
+        .drop-zone {
+            height: 65px; background: rgba(255, 255, 255, 0.15);
+            border: 2px dashed rgba(255,255,255,0.5);
+            border-radius: 12px; display: flex; align-items: center;
             padding: 0 20px; color: white; font-weight: bold;
             justify-content: space-between; position: relative;
-            transition: 0.3s;
+            transition: 0.3s; font-size: 1.2rem;
         }
 
         .audio-btn {
-            background: var(--gold); border: none; width: 35px; height: 35px;
+            background: var(--gold); border: none; width: 40px; height: 40px;
             border-radius: 50%; color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 0 #937a2a; font-size: 1.2rem;
+        }
+        .audio-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        .drop-zone.correct {
+            background: var(--success); border-style: solid;
+            border-color: #fff; box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
         }
 
-        .name-zone.correct {
-            background: var(--green); border-style: solid;
-            border-color: #fff; box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
-        }
-
-        .name-zone.wrong { background: var(--red); animation: shake 0.4s; }
+        .drop-zone.wrong { background: var(--fail); animation: shake 0.4s; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
-        #overlay {
+        #win-screen {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; flex-direction: column;
+            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
         }
-
-        .win-box { background: white; padding: 40px; border-radius: 20px; text-align: center; border: 8px solid var(--gold); }
+        .stamp-box { background: white; padding: 50px; border-radius: 30px; text-align: center; border: 10px solid var(--gold); }
     </style>
 </head>
 <body>
 
     <div id="menu" class="header">
-        <h1>✈️ Global Traveler</h1>
-        <p>Match Flags to the Destinations</p>
-        <div id="level-btns"></div>
+        <h1>✈️ Passport Pro: Global Matcher</h1>
+        <div id="level-selection"></div>
     </div>
 
-    <div class="game-area" id="game-board" style="display:none;">
-        <div class="tag-container" id="tags"></div>
-        <div class="zones-container" id="zones"></div>
+    <div class="container" id="game-board">
+        <div class="flag-pile" id="flag-list"></div>
+        <div class="destinations" id="zone-list"></div>
     </div>
 
-    <div id="overlay">
-        <div class="win-box">
-            <h1>PASSPORT STAMPED! ✈️</h1>
-            <button class="lvl-btn" onclick="location.reload()">Next Destination</button>
+    <div id="win-screen">
+        <div class="stamp-box">
+            <h1 style="color: #2c3e50; margin-bottom: 20px;">PASSPORT STAMPED!</h1>
+            <button class="lvl-btn" onclick="location.reload()" style="background: #2c3e50; color: white;">Next Flight</button>
         </div>
     </div>
 
     <script>
-        const levels = {
+        const worldData = {
             1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
             2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
             3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        let activeTag = null, startX, startY, currentMatches = 0;
+        let draggingTag = null, offsetX, offsetY, score = 0;
 
-        function speak(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
+        function playAudio(text) { 
+            window.speechSynthesis.cancel(); 
+            const msg = new SpeechSynthesisUtterance(text); 
+            msg.lang = 'en-US'; 
+            window.speechSynthesis.speak(msg); 
+        }
 
-        function initMenu() {
-            const container = document.getElementById('level-btns');
+        function buildMenu() {
+            const menu = document.getElementById('level-selection');
             for(let i=1; i<=4; i++) {
-                const b = document.createElement('button'); b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
-                b.onclick = () => startLevel(i); container.appendChild(b);
+                const b = document.createElement('button');
+                b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
+                b.onclick = () => launchGame(i);
+                menu.appendChild(b);
             }
         }
 
-        function startLevel(l) {
+        function launchGame(lvl) {
             document.getElementById('menu').style.display = 'none';
             document.getElementById('game-board').style.display = 'flex';
-            const data = levels[l];
-            const tagsDiv = document.getElementById('tags');
-            const zonesDiv = document.getElementById('zones');
+            const data = worldData[lvl];
             
+            const flagsContainer = document.getElementById('flag-list');
+            const zonesContainer = document.getElementById('zone-list');
+
+            // Shuffle and Create Flags
             [...data].sort(()=>Math.random()-0.5).forEach(item => {
-                const tag = document.createElement('div');
-                tag.className = 'flag-tag'; tag.innerText = item.e; tag.dataset.name = item.n;
-                tag.onpointerdown = startDrag;
-                tagsDiv.appendChild(tag);
+                const f = document.createElement('div');
+                f.className = 'draggable-flag'; f.innerText = item.e; f.dataset.country = item.n;
+                f.onpointerdown = startDrag;
+                flagsContainer.appendChild(f);
             });
 
+            // Shuffle and Create Zones
             [...data].sort(()=>Math.random()-0.5).forEach(item => {
-                const zone = document.createElement('div');
-                zone.className = 'name-zone'; zone.dataset.name = item.n;
-                zone.innerHTML = `<span>${item.n}</span><button class="audio-btn" onclick="speak('${item.n}')">🔊</button>`;
-                zonesDiv.appendChild(zone);
+                const z = document.createElement('div');
+                z.className = 'drop-zone'; z.dataset.country = item.n;
+                z.innerHTML = `<span>${item.n}</span> <button class="audio-btn" onpointerdown="event.stopPropagation(); playAudio('${item.n}')">🔊</button>`;
+                zonesContainer.appendChild(z);
             });
         }
 
         function startDrag(e) {
-            activeTag = e.target;
-            activeTag.style.transition = 'none';
-            activeTag.style.zIndex = 1000;
-            startX = e.clientX - activeTag.offsetLeft;
-            startY = e.clientY - activeTag.offsetTop;
-            document.onpointermove = doDrag;
-            document.onpointerup = stopDrag;
-            speak(activeTag.dataset.name);
+            draggingTag = e.target;
+            draggingTag.style.transition = 'none';
+            draggingTag.style.zIndex = 1000;
+            const rect = draggingTag.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            // Set initial position for absolute movement
+            draggingTag.style.position = 'fixed';
+            draggingTag.style.left = (e.clientX - offsetX) + 'px';
+            draggingTag.style.top = (e.clientY - offsetY) + 'px';
+
+            document.onpointermove = moveDrag;
+            document.onpointerup = endDrag;
+            playAudio(draggingTag.dataset.country);
         }
 
-        function doDrag(e) {
-            if(!activeTag) return;
-            activeTag.style.left = (e.clientX - startX) + 'px';
-            activeTag.style.top = (e.clientY - startY) + 'px';
+        function moveDrag(e) {
+            if(!draggingTag) return;
+            draggingTag.style.left = (e.clientX - offsetX) + 'px';
+            draggingTag.style.top = (e.clientY - offsetY) + 'px';
         }
 
-        function stopDrag(e) {
-            const zones = document.getElementsByClassName('name-zone');
-            let matched = false;
+        function endDrag(e) {
+            const zones = document.getElementsByClassName('drop-zone');
+            let foundMatch = false;
 
-            for (let zone of zones) {
-                const rect = zone.getBoundingClientRect();
-                if (e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom) {
-                    if (zone.dataset.name === activeTag.dataset.name && !zone.classList.contains('correct')) {
-                        // Success
-                        zone.classList.add('correct');
-                        zone.innerHTML = `<span style="font-size:1.5rem">${activeTag.innerText}</span> <span>${zone.dataset.name}</span>`;
-                        activeTag.remove();
-                        currentMatches++;
-                        speak("Excellent");
-                        matched = true;
-                        if(currentMatches === 8) { confetti(); document.getElementById('overlay').style.display='flex'; }
+            for (let z of zones) {
+                const r = z.getBoundingClientRect();
+                if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
+                    if (z.dataset.country === draggingTag.dataset.country && !z.classList.contains('correct')) {
+                        // Correct!
+                        z.classList.add('correct');
+                        z.innerHTML = `<span style="font-size:1.8rem">${draggingTag.innerText}</span> <span>${z.dataset.country}</span>`;
+                        draggingTag.remove();
+                        score++;
+                        playAudio("Good job!");
+                        foundMatch = true;
+                        if(score === 8) { confetti({particleCount:150}); document.getElementById('win-screen').style.display='flex'; }
                         break;
-                    } else if (!zone.classList.contains('correct')) {
-                        // Wrong
-                        zone.classList.add('wrong');
-                        setTimeout(() => zone.classList.remove('wrong'), 500);
-                        speak("Not there");
+                    } else if (!z.classList.contains('correct')) {
+                        // Wrong!
+                        z.classList.add('wrong');
+                        setTimeout(() => z.classList.remove('wrong'), 500);
+                        playAudio("Try again");
                     }
                 }
             }
 
-            if (!matched && activeTag) {
-                activeTag.style.transition = '0.3s';
-                activeTag.style.left = '0px';
-                activeTag.style.top = '0px';
-                activeTag.style.zIndex = 10;
+            if (!foundMatch && draggingTag) {
+                // Reset flag position
+                draggingTag.style.transition = '0.4s';
+                draggingTag.style.position = 'relative';
+                draggingTag.style.left = '0';
+                draggingTag.style.top = '0';
+                draggingTag.style.zIndex = 10;
             }
-            activeTag = null; document.onpointermove = null; document.onpointerup = null;
+            draggingTag = null; document.onpointermove = null; document.onpointerup = null;
         }
 
-        initMenu();
+        buildMenu();
     </script>
 </body>
 </html>
