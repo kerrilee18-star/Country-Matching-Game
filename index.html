@@ -1,97 +1,84 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>דרכון עולמי: משחק התאמה</title>
+    <title>Passport Pro Matcher</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Assistant:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Assistant:wght@600;800&display=swap');
 
         :root {
-            --desk: #4e342e;
-            --parchment: #fdfaf0;
+            --desk: #3e2723;
+            --paper: #fdfaf0;
+            --gold: #d4af37;
             --ink: #1a1a1a;
-            --gold: #c5a021;
         }
 
         body {
-            font-family: 'Assistant', sans-serif;
-            background-color: var(--desk);
-            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+            font-family: 'Assistant', 'Segoe UI', sans-serif;
+            background: var(--desk) url('https://www.transparenttextures.com/patterns/dark-wood.png');
             margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
             overflow: hidden; touch-action: none;
         }
 
-        /* Audio & Start Overlay */
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--desk); z-index: 5000;
+        /* Essential Audio Unlocker */
+        #unlock-screen {
+            position: fixed; inset: 0; background: var(--desk); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: white; text-align: center;
         }
 
         .header {
-            text-align: center; color: var(--parchment);
-            border-bottom: 3px solid var(--gold);
-            width: 100%; max-width: 800px; padding: 10px 0; margin-bottom: 15px;
+            text-align: center; color: var(--paper); border-bottom: 3px solid var(--gold);
+            width: 95%; max-width: 800px; padding: 10px 0; margin-bottom: 10px;
         }
 
-        #stats-bar {
-            display: flex; justify-content: space-around; width: 100%;
-            max-width: 600px; color: var(--gold); font-weight: bold; font-size: 1.5rem;
-            margin-bottom: 15px; text-shadow: 1px 1px 2px black;
+        /* TIMER & SCORE BAR - VISIBLE DURING GAMEPLAY */
+        #game-stats {
+            display: none; width: 100%; max-width: 600px;
+            justify-content: space-around; background: rgba(0,0,0,0.4);
+            padding: 10px; border-radius: 50px; margin-bottom: 15px;
+            color: var(--gold); font-size: 1.4rem; font-weight: bold;
         }
 
-        /* Aligned Grid */
-        .game-grid {
-            display: none; 
-            grid-template-columns: 1fr 140px; /* Name on Right, Flag on Left for RTL */
-            gap: 30px; width: 100%; max-width: 900px;
+        /* GRID LAYOUT - FORCING SIDE BY SIDE */
+        #game-board {
+            display: none; grid-template-columns: 130px 1fr;
+            gap: 25px; width: 100%; max-width: 850px; padding: 10px;
         }
 
-        .column { display: flex; flex-direction: column; gap: 12px; }
+        .col { display: flex; flex-direction: column; gap: 12px; }
 
-        /* Draggable Flag */
+        /* THE LUGGAGE TAGS (FLAGS) */
         .flag-tag {
-            width: 120px; height: 80px; 
-            background: white; border-radius: 4px;
-            border-right: 10px solid var(--gold); /* Swapped for RTL */
+            width: 110px; height: 75px; background: white;
+            border-radius: 5px; border-left: 10px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; cursor: grab; position: relative;
-            box-shadow: 4px 6px 12px rgba(0,0,0,0.4);
+            font-size: 3rem; cursor: grab; box-shadow: 4px 6px 12px rgba(0,0,0,0.5);
             z-index: 100; touch-action: none;
         }
 
-        /* Name Box (English Content) */
-        .name-box {
-            height: 80px; background: var(--parchment);
-            border: 2px solid #dcd7ca; border-radius: 15px;
+        /* THE PASSPORT SLOTS (NAMES) */
+        .name-slot {
+            height: 75px; background: var(--paper);
+            border: 2px solid #ddd; border-radius: 12px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 25px; color: var(--ink); font-weight: 800;
-            font-family: 'Montserrat', sans-serif;
-            position: relative; font-size: 1.6rem;
+            padding: 0 20px; color: var(--ink); font-weight: 800;
+            font-family: 'Montserrat', sans-serif; font-size: 1.5rem;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-            direction: ltr; /* Keeps English text readable */
         }
 
         .audio-btn {
-            background: var(--gold); border: none; width: 50px; height: 50px;
+            background: var(--gold); border: none; width: 45px; height: 45px;
             border-radius: 50%; color: white; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; box-shadow: 0 4px 0 #8d7318;
+            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 0 #8d7318;
         }
 
-        .lvl-btn {
-            background: var(--gold); color: white; border: none;
-            padding: 15px 40px; margin: 10px; border-radius: 10px;
-            font-size: 1.8rem; cursor: pointer; font-weight: bold;
-            font-family: 'Assistant';
-        }
-
-        .name-box.correct { background: #2ecc71; color: white; border: none; }
-        .name-box.wrong { background: #e74c3c; color: white; animation: shake 0.4s; }
+        .name-slot.correct { background: #27ae60; color: white; border-color: white; }
+        .name-slot.wrong { background: #c0392b; color: white; animation: shake 0.4s; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -99,166 +86,160 @@
             75% { transform: translateX(10px); }
         }
 
-        #win-screen {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9); z-index: 9999;
-            flex-direction: column; align-items: center; justify-content: center; color: white;
+        .btn {
+            background: var(--gold); color: white; border: none;
+            padding: 15px 30px; margin: 10px; border-radius: 8px;
+            font-size: 1.4rem; font-weight: bold; cursor: pointer;
+        }
+
+        #win-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 10000; flex-direction: column; align-items: center; justify-content: center; color: white;
         }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay">
-        <h1>מוכנים לצאת לדרך?</h1>
-        <button class="lvl-btn" onclick="unlockAudio()">לחצו כאן כדי להתחיל</button>
+    <div id="unlock-screen">
+        <h1 style="font-size: 2.5rem;">READY? / מוכנים?</h1>
+        <button class="btn" onclick="initSystem()">START GAME / התחל משחק</button>
+        <p>Press to enable sound / לחצו להפעלת שמע</p>
     </div>
 
-    <div id="menu" class="header" style="display:none;">
-        <h1>ביקורת דרכונים עולמית</h1>
-        <div id="level-list"></div>
+    <div id="main-menu" class="header" style="display:none;">
+        <h1>Passport Match / התאמת דרכונים</h1>
+        <div id="lvl-btns"></div>
     </div>
 
-    <div id="stats-bar" style="display:none;">
-        <div id="timer">זמן: 00:00</div>
-        <div id="score">התאמות: 0/8</div>
+    <div id="game-stats">
+        <div id="timer-display">Time: 00:00 / זמן</div>
+        <div id="score-display">Matches: 0/8 / התאמות</div>
     </div>
 
-    <div class="game-grid" id="board">
-        <div class="column" id="flags"></div>
-        <div class="column" id="names"></div>
+    <div id="game-board">
+        <div class="col" id="flag-col"></div>
+        <div class="col" id="name-col"></div>
     </div>
 
-    <div id="win-screen">
-        <h1 style="font-size: 3rem;">הדרכון הוחתם! ✈️</h1>
+    <div id="win-modal">
+        <h1 style="font-size: 3rem;">WELL DONE! / כל הכבוד!</h1>
         <h2 id="final-time"></h2>
-        <button class="lvl-btn" onclick="location.reload()">טיסה הבאה</button>
+        <button class="btn" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
     <script>
-        const gameData = {
+        const database = {
             1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
             2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
             3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        let dragTarget = null, grabX, grabY, matches = 0;
-        let seconds = 0, timerInterval = null;
+        let dragTarget = null, grabX, grabY, solved = 0, clock = 0, timerRef = null;
 
-        function unlockAudio() {
+        function initSystem() {
             window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(' '));
-            document.getElementById('start-overlay').style.display = 'none';
-            document.getElementById('menu').style.display = 'block';
-            createMenu();
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); // Unlocks voice
+            document.getElementById('unlock-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'block';
+            renderLevels();
         }
 
-        function speak(text) {
+        function playVoice(txt) {
             window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
+            const msg = new SpeechSynthesisUtterance(txt);
             msg.lang = 'en-US';
             window.speechSynthesis.speak(msg);
         }
 
-        function updateTimer() {
-            seconds++;
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer').innerText = `זמן: ${mins}:${secs}`;
+        function runTimer() {
+            clock++;
+            const m = Math.floor(clock / 60).toString().padStart(2, '0');
+            const s = (clock % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `Time: ${m}:${s} / זמן`;
         }
 
-        function createMenu() {
-            const list = document.getElementById('level-list');
+        function renderLevels() {
+            const container = document.getElementById('lvl-btns');
             for(let i=1; i<=4; i++) {
                 const b = document.createElement('button');
-                b.className = 'lvl-btn'; b.innerText = `שלב ${i}`;
-                b.onclick = () => startLevel(i);
-                list.appendChild(b);
+                b.className = 'btn'; b.innerText = `Level ${i} / שלב`;
+                b.onclick = () => start(i);
+                container.appendChild(b);
             }
         }
 
-        function startLevel(lvl) {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('board').style.display = 'grid';
-            document.getElementById('stats-bar').style.display = 'flex';
-            timerInterval = setInterval(updateTimer, 1000);
+        function start(lvl) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-stats').style.display = 'flex';
+            document.getElementById('game-board').style.display = 'grid';
+            timerRef = setInterval(runTimer, 1000);
 
-            const items = gameData[lvl];
-            const flagCol = document.getElementById('flags');
-            const nameCol = document.getElementById('names');
+            const items = database[lvl];
+            const flagDiv = document.getElementById('flag-col');
+            const nameDiv = document.getElementById('name-col');
 
             [...items].sort(()=>Math.random()-0.5).forEach(d => {
                 const f = document.createElement('div');
-                f.className = 'flag-tag'; f.innerText = d.e; f.dataset.name = d.n;
-                f.addEventListener('pointerdown', (e) => onGrab(e, f));
-                flagCol.appendChild(f);
+                f.className = 'flag-tag'; f.innerText = d.e; f.dataset.country = d.n;
+                f.onpointerdown = (e) => pickup(e, f);
+                flagDiv.appendChild(f);
             });
 
             [...items].sort(()=>Math.random()-0.5).forEach(d => {
-                const n = document.createElement('div');
-                n.className = 'name-box'; n.dataset.name = d.n;
-                n.innerHTML = `<button class="audio-btn" onclick="speak('${d.n}')">🔊</button> <span>${d.n}</span>`;
-                nameCol.appendChild(n);
+                const s = document.createElement('div');
+                s.className = 'name-slot'; s.dataset.country = d.n;
+                s.innerHTML = `<span>${d.n}</span> <button class="audio-btn" onclick="playVoice('${d.n}')">🔊</button>`;
+                nameDiv.appendChild(s);
             });
         }
 
-        function onGrab(e, el) {
+        function pickup(e, el) {
             dragTarget = el;
             dragTarget.style.transition = 'none';
-            const rect = dragTarget.getBoundingClientRect();
-            grabX = e.clientX - rect.left;
-            grabY = e.clientY - rect.top;
-            dragTarget.style.position = 'fixed';
-            dragTarget.style.zIndex = '1000';
-            speak(dragTarget.dataset.name);
-            
-            document.addEventListener('pointermove', onMove);
-            document.addEventListener('pointerup', onDrop);
-        }
-
-        function onMove(e) {
-            if(!dragTarget) return;
-            dragTarget.style.left = (e.clientX - grabX) + 'px';
-            dragTarget.style.top = (e.clientY - grabY) + 'px';
-        }
-
-        function onDrop(e) {
-            const boxes = document.getElementsByClassName('name-box');
-            let matched = false;
-
-            for(let b of boxes) {
-                const r = b.getBoundingClientRect();
-                if(e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
-                    if(b.dataset.name === dragTarget.dataset.name && !b.classList.contains('correct')) {
-                        b.classList.add('correct');
-                        b.innerHTML = `<span>${b.dataset.name}</span> <span style="font-size:2.5rem">${dragTarget.innerText}</span>`;
-                        dragTarget.remove();
-                        matches++;
-                        document.getElementById('score').innerText = `התאמות: ${matches}/8`;
-                        matched = true;
-                        if(matches === 8) {
-                            clearInterval(timerInterval);
-                            confetti();
-                            document.getElementById('final-time').innerText = `זמן סופי: ${document.getElementById('timer').innerText.split(': ')[1]}`;
-                            document.getElementById('win-screen').style.display='flex';
+            const r = dragTarget.getBoundingClientRect();
+            grabX = e.clientX - r.left; grabY = e.clientY - r.top;
+            dragTarget.style.position = 'fixed'; dragTarget.style.zIndex = '1000';
+            playVoice(dragTarget.dataset.country);
+            document.onpointermove = (ev) => {
+                dragTarget.style.left = (ev.clientX - grabX) + 'px';
+                dragTarget.style.top = (ev.clientY - grabY) + 'px';
+            };
+            document.onpointerup = (ev) => {
+                const slots = document.getElementsByClassName('name-slot');
+                let found = false;
+                for(let slot of slots) {
+                    const rect = slot.getBoundingClientRect();
+                    if(ev.clientX > rect.left && ev.clientX < rect.right && ev.clientY > rect.top && ev.clientY < rect.bottom) {
+                        if(slot.dataset.country === dragTarget.dataset.country && !slot.classList.contains('correct')) {
+                            slot.classList.add('correct');
+                            slot.innerHTML = `<span style="font-size:2.4rem">${dragTarget.innerText}</span> <span>${slot.dataset.country}</span>`;
+                            dragTarget.remove();
+                            solved++;
+                            document.getElementById('score-display').innerText = `Matches: ${solved}/8 / התאמות`;
+                            playVoice("Correct");
+                            found = true;
+                            if(solved === 8) {
+                                clearInterval(timerRef);
+                                confetti();
+                                document.getElementById('final-time').innerText = `Final Time: ${document.getElementById('timer-display').innerText.split('/')[0]}`;
+                                document.getElementById('win-modal').style.display = 'flex';
+                            }
+                            break;
+                        } else if (!slot.classList.contains('correct')) {
+                            slot.classList.add('wrong');
+                            setTimeout(() => slot.classList.remove('wrong'), 400);
+                            playVoice("No");
                         }
-                        break;
-                    } else if (!b.classList.contains('correct')) {
-                        b.classList.add('wrong');
-                        setTimeout(() => b.classList.remove('wrong'), 400);
-                        speak("No");
                     }
                 }
-            }
-
-            if(!matched && dragTarget) {
-                dragTarget.style.transition = '0.3s';
-                dragTarget.style.position = 'relative';
-                dragTarget.style.left = '0'; dragTarget.style.top = '0';
-            }
-            dragTarget = null;
-            document.removeEventListener('pointermove', onMove);
-            document.removeEventListener('pointerup', onDrop);
+                if(!found && dragTarget) {
+                    dragTarget.style.transition = '0.3s';
+                    dragTarget.style.position = 'relative';
+                    dragTarget.style.left = '0'; dragTarget.style.top = '0';
+                }
+                dragTarget = null; document.onpointermove = null; document.onpointerup = null;
+            };
         }
     </script>
 </body>
