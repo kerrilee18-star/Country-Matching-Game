@@ -16,14 +16,14 @@
         }
 
         body {
-            font-family: 'Assistant', 'Segoe UI', sans-serif;
+            font-family: 'Assistant', sans-serif;
             background: var(--desk) url('https://www.transparenttextures.com/patterns/dark-wood.png');
             margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
             overflow: hidden; touch-action: none;
         }
 
-        /* Essential Audio Unlocker */
+        /* Essential Start Screen */
         #unlock-screen {
             position: fixed; inset: 0; background: var(--desk); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -35,15 +35,15 @@
             width: 95%; max-width: 800px; padding: 10px 0; margin-bottom: 10px;
         }
 
-        /* TIMER & SCORE BAR - VISIBLE DURING GAMEPLAY */
+        /* TIMER & SCORE BAR */
         #game-stats {
             display: none; width: 100%; max-width: 600px;
-            justify-content: space-around; background: rgba(0,0,0,0.4);
-            padding: 10px; border-radius: 50px; margin-bottom: 15px;
-            color: var(--gold); font-size: 1.4rem; font-weight: bold;
+            justify-content: space-around; background: rgba(0,0,0,0.6);
+            padding: 12px; border-radius: 50px; margin-bottom: 15px;
+            color: var(--gold); font-size: 1.4rem; font-weight: bold; border: 1px solid var(--gold);
         }
 
-        /* GRID LAYOUT - FORCING SIDE BY SIDE */
+        /* GRID LAYOUT - SIDE BY SIDE */
         #game-board {
             display: none; grid-template-columns: 130px 1fr;
             gap: 25px; width: 100%; max-width: 850px; padding: 10px;
@@ -51,30 +51,24 @@
 
         .col { display: flex; flex-direction: column; gap: 12px; }
 
-        /* THE LUGGAGE TAGS (FLAGS) */
+        /* THE FLAG TAGS - Audio triggers on Grab */
         .flag-tag {
             width: 110px; height: 75px; background: white;
             border-radius: 5px; border-left: 10px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; cursor: grab; box-shadow: 4px 6px 12px rgba(0,0,0,0.5);
+            font-size: 3.5rem; cursor: grab; box-shadow: 4px 6px 12px rgba(0,0,0,0.5);
             z-index: 100; touch-action: none;
         }
 
-        /* THE PASSPORT SLOTS (NAMES) */
+        /* THE PASSPORT SLOTS - NO AUDIO BUTTONS */
         .name-slot {
             height: 75px; background: var(--paper);
             border: 2px solid #ddd; border-radius: 12px;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; color: var(--ink); font-weight: 800;
-            font-family: 'Montserrat', sans-serif; font-size: 1.5rem;
+            display: flex; align-items: center; justify-content: center; /* Centered Text */
+            color: var(--ink); font-weight: 800;
+            font-family: 'Montserrat', sans-serif; font-size: 1.6rem;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .audio-btn {
-            background: var(--gold); border: none; width: 45px; height: 45px;
-            border-radius: 50%; color: white; cursor: pointer;
-            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 0 #8d7318;
+            text-align: center;
         }
 
         .name-slot.correct { background: #27ae60; color: white; border-color: white; }
@@ -90,6 +84,7 @@
             background: var(--gold); color: white; border: none;
             padding: 15px 30px; margin: 10px; border-radius: 8px;
             font-size: 1.4rem; font-weight: bold; cursor: pointer;
+            font-family: 'Assistant';
         }
 
         #win-modal {
@@ -123,7 +118,7 @@
 
     <div id="win-modal">
         <h1 style="font-size: 3rem;">WELL DONE! / כל הכבוד!</h1>
-        <h2 id="final-time"></h2>
+        <h2 id="final-time" style="color: var(--gold);"></h2>
         <button class="btn" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
@@ -139,7 +134,7 @@
 
         function initSystem() {
             window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); // Unlocks voice
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(' ')); 
             document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'block';
             renderLevels();
@@ -149,6 +144,7 @@
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(txt);
             msg.lang = 'en-US';
+            msg.rate = 0.85; // Slightly slower for clarity
             window.speechSynthesis.speak(msg);
         }
 
@@ -182,6 +178,7 @@
             [...items].sort(()=>Math.random()-0.5).forEach(d => {
                 const f = document.createElement('div');
                 f.className = 'flag-tag'; f.innerText = d.e; f.dataset.country = d.n;
+                // AUDIO TRIGGER ON FLAG GRAB
                 f.onpointerdown = (e) => pickup(e, f);
                 flagDiv.appendChild(f);
             });
@@ -189,7 +186,7 @@
             [...items].sort(()=>Math.random()-0.5).forEach(d => {
                 const s = document.createElement('div');
                 s.className = 'name-slot'; s.dataset.country = d.n;
-                s.innerHTML = `<span>${d.n}</span> <button class="audio-btn" onclick="playVoice('${d.n}')">🔊</button>`;
+                s.innerHTML = `<span>${d.n}</span>`;
                 nameDiv.appendChild(s);
             });
         }
@@ -200,11 +197,15 @@
             const r = dragTarget.getBoundingClientRect();
             grabX = e.clientX - r.left; grabY = e.clientY - r.top;
             dragTarget.style.position = 'fixed'; dragTarget.style.zIndex = '1000';
+            
+            // Trigger audio when grabbed
             playVoice(dragTarget.dataset.country);
+
             document.onpointermove = (ev) => {
                 dragTarget.style.left = (ev.clientX - grabX) + 'px';
                 dragTarget.style.top = (ev.clientY - grabY) + 'px';
             };
+
             document.onpointerup = (ev) => {
                 const slots = document.getElementsByClassName('name-slot');
                 let found = false;
@@ -217,7 +218,7 @@
                             dragTarget.remove();
                             solved++;
                             document.getElementById('score-display').innerText = `Matches: ${solved}/8 / התאמות`;
-                            playVoice("Correct");
+                            playVoice("Excellent");
                             found = true;
                             if(solved === 8) {
                                 clearInterval(timerRef);
@@ -229,7 +230,7 @@
                         } else if (!slot.classList.contains('correct')) {
                             slot.classList.add('wrong');
                             setTimeout(() => slot.classList.remove('wrong'), 400);
-                            playVoice("No");
+                            playVoice("Try again");
                         }
                     }
                 }
