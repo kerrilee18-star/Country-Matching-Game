@@ -3,75 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Matcher Pro</title>
+    <title>Passport Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        /* 1. HIGH CONTRAST & CLEAN FONT */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Special+Elite&display=swap');
+
+        :root {
+            --desk: #4e342e;
+            --parchment: #f4f1ea;
+            --ink: #1a1a1a;
+            --gold: #c5a021;
+        }
+
         body {
-            font-family: 'Arial Black', Gadget, sans-serif;
-            background-color: #f0f4f7; /* Very light blue-grey, soft on eyes */
-            margin: 0; padding: 20px;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--desk);
+            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+            margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
-            touch-action: none; /* Crucial for stopping browser jitter */
+            overflow: hidden; touch-action: none;
+        }
+
+        /* Initial Audio Unlocker */
+        #audio-unlock {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--desk); z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
         }
 
         .header {
-            text-align: center; color: #2c3e50;
-            border-bottom: 5px solid #d4af37;
-            width: 100%; max-width: 800px;
-            margin-bottom: 30px; padding-bottom: 10px;
+            text-align: center; color: var(--parchment);
+            border-bottom: 3px solid var(--gold);
+            width: 100%; max-width: 800px; padding: 10px 0; margin-bottom: 20px;
         }
 
-        .lvl-btn {
-            background: #2c3e50; color: white; border: none;
-            padding: 20px 40px; margin: 10px; border-radius: 10px;
-            font-size: 1.5rem; cursor: pointer;
-        }
-
-        /* 2. ALIGNED SIDE-BY-SIDE LAYOUT */
+        /* Layout - Flags on Left, Names on Right */
         .game-grid {
-            display: none; /* Hidden until level select */
-            grid-template-columns: 150px 1fr; 
-            gap: 50px; width: 100%; max-width: 900px;
+            display: none; 
+            grid-template-columns: 140px 1fr; 
+            gap: 30px; width: 100%; max-width: 900px;
+            padding: 10px;
         }
 
-        .col { display: flex; flex-direction: column; gap: 20px; }
+        .column { display: flex; flex-direction: column; gap: 12px; }
 
-        /* 3. THE FLAG TAGS */
-        .flag-item {
-            width: 130px; height: 90px; background: white;
-            border: 3px solid #2c3e50; border-radius: 15px;
+        /* Draggable Flag Tags */
+        .flag-tag {
+            width: 120px; height: 80px; 
+            background: white; border-radius: 4px;
+            border-left: 10px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 4rem; cursor: move; position: relative;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-            z-index: 10; touch-action: none;
+            font-size: 3.5rem; cursor: grab; position: relative;
+            box-shadow: 4px 6px 12px rgba(0,0,0,0.4);
+            z-index: 100; touch-action: none;
         }
 
-        /* 4. THE NAME BOXES */
+        /* Destination Boxes */
         .name-box {
-            height: 90px; background: white;
-            border: 4px dashed #bdc3c7; border-radius: 15px;
+            height: 80px; background: var(--parchment);
+            border: 2px solid #dcd7ca; border-radius: 15px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 30px; font-size: 1.8rem; color: #1a1a1a;
-            position: relative; box-sizing: border-box;
+            padding: 0 25px; color: var(--ink); font-weight: 800;
+            position: relative; font-size: 1.5rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* 5. THE AUDIO BUTTON (PROMINENT) */
-        .speaker-btn {
-            background: #d4af37; border: none; width: 60px; height: 60px;
+        .audio-btn {
+            background: var(--gold); border: none; width: 50px; height: 50px;
             border-radius: 50%; color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; box-shadow: 0 4px 0 #a6892c;
+            font-size: 1.5rem; box-shadow: 0 4px 0 #8d7318;
         }
 
-        /* FEEDBACK STATES */
-        .name-box.correct { background: #27ae60; border: 4px solid #fff; color: white; }
-        .name-box.wrong { background: #c0392b; color: white; animation: shake 0.4s; }
+        /* States */
+        .name-box.correct { background: #2ecc71; color: white; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .name-box.wrong { background: #e74c3c; color: white; animation: shake 0.4s; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-15px); }
-            75% { transform: translateX(15px); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .lvl-btn {
+            background: var(--gold); color: white; border: none;
+            padding: 20px 40px; margin: 10px; border-radius: 10px;
+            font-size: 1.5rem; cursor: pointer; font-weight: bold;
         }
 
         #win-screen {
@@ -83,131 +101,146 @@
 </head>
 <body>
 
-    <div id="menu" class="header">
-        <h1>GLOBAL MATCHING PRO</h1>
+    <div id="audio-unlock">
+        <h1 style="font-family: 'Special Elite';">READY TO TRAVEL?</h1>
+        <button class="lvl-btn" onclick="unlockAudio()">START JOURNEY</button>
+        <p>Click to enable game audio</p>
+    </div>
+
+    <div id="menu" class="header" style="display:none;">
+        <h1 style="font-family: 'Special Elite'; margin: 0;">GLOBAL PASSPORT CONTROL</h1>
         <div id="level-list"></div>
     </div>
 
     <div class="game-grid" id="board">
-        <div class="col" id="flags"></div>
-        <div class="col" id="names"></div>
+        <div class="column" id="flags"></div>
+        <div class="column" id="names"></div>
     </div>
 
     <div id="win-screen">
-        <h1 style="color:white; font-size: 4rem;">EXCELLENT! ✈️</h1>
-        <button class="lvl-btn" onclick="location.reload()">PLAY AGAIN</button>
+        <h1 style="color:white; font-size: 3rem;">PASSPORT STAMPED! ✈️</h1>
+        <button class="lvl-btn" onclick="location.reload()">NEXT FLIGHT</button>
     </div>
 
     <script>
-        const dataSet = {
+        const gameData = {
             1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
             2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
             3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        let activeObj = null, offset = {x:0, y:0}, winCount = 0;
+        let dragTarget = null, grabX, grabY, winCount = 0;
 
-        // FIXED AUDIO FUNCTION
-        function speak(val) {
-            if (!val) return;
+        // FIXED AUDIO: Browser unlock
+        function unlockAudio() {
             window.speechSynthesis.cancel();
-            const speech = new SpeechSynthesisUtterance(val);
-            speech.lang = 'en-US';
-            window.speechSynthesis.speak(speech);
+            const u = new SpeechSynthesisUtterance('Welcome');
+            u.volume = 0; // Silent first play to unlock
+            window.speechSynthesis.speak(u);
+            document.getElementById('audio-unlock').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+            createMenu();
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US';
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
         }
 
         function createMenu() {
-            const m = document.getElementById('level-list');
+            const list = document.getElementById('level-list');
             for(let i=1; i<=4; i++) {
                 const b = document.createElement('button');
-                b.className = 'lvl-btn'; b.innerText = `LEVEL ${i}`;
-                b.onclick = () => initGame(i);
-                m.appendChild(b);
+                b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
+                b.onclick = () => startLevel(i);
+                list.appendChild(b);
             }
         }
 
-        function initGame(lvl) {
+        function startLevel(lvl) {
             document.getElementById('menu').style.display = 'none';
             document.getElementById('board').style.display = 'grid';
-            const currentItems = dataSet[lvl];
+            const items = gameData[lvl];
             
-            const flagArea = document.getElementById('flags');
-            const nameArea = document.getElementById('names');
+            const flagCol = document.getElementById('flags');
+            const nameCol = document.getElementById('names');
 
-            [...currentItems].sort(()=>Math.random()-0.5).forEach(item => {
+            [...items].sort(()=>Math.random()-0.5).forEach(d => {
                 const f = document.createElement('div');
-                f.className = 'flag-item'; f.innerText = item.e; f.dataset.country = item.n;
-                // Use Pointer Events for cross-platform support (Touch + Mouse)
-                f.onpointerdown = (e) => startMove(e, f);
-                flagArea.appendChild(f);
+                f.className = 'flag-tag'; f.innerText = d.e; f.dataset.name = d.n;
+                f.addEventListener('pointerdown', (e) => onGrab(e, f));
+                flagCol.appendChild(f);
             });
 
-            [...currentItems].sort(()=>Math.random()-0.5).forEach(item => {
+            [...items].sort(()=>Math.random()-0.5).forEach(d => {
                 const n = document.createElement('div');
-                n.className = 'name-box'; n.dataset.country = item.n;
-                n.innerHTML = `<span>${item.n}</span> 
-                    <button class="speaker-btn" onpointerdown="event.stopPropagation(); speak('${item.n}')">🔊</button>`;
-                nameArea.appendChild(n);
+                n.className = 'name-box'; n.dataset.name = d.n;
+                n.innerHTML = `<span>${d.n}</span> 
+                    <button class="audio-btn" onclick="speak('${d.n}')">🔊</button>`;
+                nameCol.appendChild(n);
             });
         }
 
-        function startMove(e, el) {
-            activeObj = el;
-            activeObj.style.transition = 'none';
-            activeObj.style.zIndex = '9999';
-            const b = activeObj.getBoundingClientRect();
-            offset.x = e.clientX - b.left;
-            offset.y = e.clientY - b.top;
+        function onGrab(e, el) {
+            dragTarget = el;
+            dragTarget.style.transition = 'none';
+            dragTarget.style.zIndex = '500';
+            const rect = dragTarget.getBoundingClientRect();
+            grabX = e.clientX - rect.left;
+            grabY = e.clientY - rect.top;
             
-            activeObj.style.position = 'fixed';
-            activeObj.style.left = (e.clientX - offset.x) + 'px';
-            activeObj.style.top = (e.clientY - offset.y) + 'px';
+            dragTarget.style.position = 'fixed';
+            dragTarget.style.left = (e.clientX - grabX) + 'px';
+            dragTarget.style.top = (e.clientY - grabY) + 'px';
 
-            document.onpointermove = (ev) => {
-                if(!activeObj) return;
-                activeObj.style.left = (ev.clientX - offset.x) + 'px';
-                activeObj.style.top = (ev.clientY - offset.y) + 'px';
-            };
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup', onDrop);
+            speak(dragTarget.dataset.name);
+        }
 
-            document.onpointerup = (ev) => {
-                const zones = document.getElementsByClassName('name-box');
-                let found = false;
+        function onMove(e) {
+            if(!dragTarget) return;
+            dragTarget.style.left = (e.clientX - grabX) + 'px';
+            dragTarget.style.top = (e.clientY - grabY) + 'px';
+        }
 
-                for(let z of zones) {
-                    const r = z.getBoundingClientRect();
-                    if(ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
-                        if(z.dataset.country === activeObj.dataset.country && !z.classList.contains('correct')) {
-                            // CORRECT
-                            z.classList.add('correct');
-                            z.innerHTML = `<span style="font-size:3rem">${activeObj.innerText}</span> <span>${z.dataset.country}</span>`;
-                            activeObj.remove();
-                            winCount++;
-                            speak("Correct");
-                            found = true;
-                            if(winCount === 8) { confetti(); document.getElementById('win-screen').style.display='flex'; }
-                            break;
-                        } else if (!z.classList.contains('correct')) {
-                            // WRONG
-                            z.classList.add('wrong');
-                            setTimeout(() => z.classList.remove('wrong'), 500);
-                            speak("No");
-                        }
+        function onDrop(e) {
+            const boxes = document.getElementsByClassName('name-box');
+            let matched = false;
+
+            for(let b of boxes) {
+                const r = b.getBoundingClientRect();
+                if(e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
+                    if(b.dataset.name === dragTarget.dataset.name && !b.classList.contains('correct')) {
+                        b.classList.add('correct');
+                        b.innerHTML = `<span style="font-size:2.5rem">${dragTarget.innerText}</span> <span>${b.dataset.name}</span>`;
+                        dragTarget.remove();
+                        winCount++;
+                        speak("Correct!");
+                        matched = true;
+                        if(winCount === 8) { confetti(); document.getElementById('win-screen').style.display='flex'; }
+                        break;
+                    } else if (!b.classList.contains('correct')) {
+                        b.classList.add('wrong');
+                        setTimeout(() => b.classList.remove('wrong'), 400);
+                        speak("No");
                     }
                 }
+            }
 
-                if(!found && activeObj) {
-                    activeObj.style.transition = '0.3s';
-                    activeObj.style.position = 'relative';
-                    activeObj.style.left = '0'; activeObj.style.top = '0';
-                }
-                activeObj = null;
-                document.onpointermove = null;
-                document.onpointerup = null;
-            };
+            if(!matched && dragTarget) {
+                dragTarget.style.transition = '0.3s';
+                dragTarget.style.position = 'relative';
+                dragTarget.style.left = '0'; dragTarget.style.top = '0';
+            }
+            dragTarget = null;
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onDrop);
         }
-
-        createMenu();
     </script>
 </body>
 </html>
