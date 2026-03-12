@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Passport Matcher PRO</title>
+    <title>Matching Countries</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
 
         :root {
-            --desk: #1a0f0d; /* Deep dark wood */
-            --paper-dark: #0d1b2a; /* Deep Navy */
+            --desk: #1a0f0d; 
+            --paper-dark: #0d1b2a; 
             --gold: #d4af37;
             --text-white: #ffffff;
         }
@@ -23,6 +23,7 @@
             overflow: hidden; touch-action: none;
         }
 
+        /* Essential Start Screen */
         #unlock-screen {
             position: fixed; inset: 0; background: var(--desk); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -41,20 +42,17 @@
             color: var(--gold); font-size: 1.6rem; font-weight: bold; border: 2px solid var(--gold);
         }
 
-        /* UPDATED GRID - Precise Alignment */
         #game-board {
-            display: none; grid-template-columns: 200px 1fr;
+            display: none; grid-template-columns: 210px 1fr;
             gap: 25px; width: 100%; max-width: 950px; padding: 10px;
-            align-items: center; /* Vertical alignment */
+            align-items: center;
         }
 
         .col { display: flex; flex-direction: column; gap: 15px; }
 
-        /* LARGER FLAG UNIT */
         .flag-unit {
             display: flex; align-items: center; gap: 12px;
-            cursor: grab; z-index: 100; touch-action: none;
-            height: 90px; /* Matches name slot height */
+            z-index: 100; touch-action: none; height: 90px;
         }
 
         .flag-card {
@@ -62,19 +60,19 @@
             border-radius: 10px; border: 3px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
             font-size: 4rem; box-shadow: 5px 8px 15px rgba(0,0,0,0.6);
+            cursor: grab;
         }
 
+        /* BIG AUDIO BUTTON */
         .big-audio-btn {
-            width: 55px; height: 55px; background: var(--gold);
+            width: 60px; height: 60px; background: var(--gold);
             border-radius: 50%; border: none; color: white;
-            font-size: 1.6rem; cursor: pointer; display: flex;
+            font-size: 1.8rem; cursor: pointer; display: flex;
             align-items: center; justify-content: center;
-            box-shadow: 0 4px 0 #8d7318; transition: transform 0.1s;
+            box-shadow: 0 4px 0 #8d7318;
+            pointer-events: auto; /* Ensures it's clickable */
         }
 
-        .big-audio-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* HIGH CONTRAST NAME SLOTS */
         .name-slot {
             height: 85px; background: var(--paper-dark);
             border: 3px solid #334155; border-radius: 15px;
@@ -99,6 +97,7 @@
             padding: 18px 45px; margin: 10px; border-radius: 10px;
             font-size: 1.7rem; font-weight: bold; cursor: pointer;
             box-shadow: 0 5px 0 #8d7318;
+            font-family: 'Assistant';
         }
 
         #win-modal {
@@ -110,18 +109,19 @@
 <body>
 
     <div id="unlock-screen">
-        <h1 style="font-size: 3rem;">GLOBAL PASSPORT MATCH</h1>
+        <h1 style="font-size: 3rem;">Matching Countries</h1>
+        <h2 style="font-family: 'Assistant';">התאמת מדינות</h2>
         <button class="btn" onclick="initSystem()">START / התחל</button>
     </div>
 
     <div id="main-menu" class="header" style="display:none;">
-        <h1 style="letter-spacing: 2px;">WORLD COUNTRIES / מדינות העולם</h1>
+        <h1>Matching Countries / התאמת מדינות</h1>
         <div id="lvl-btns"></div>
     </div>
 
     <div id="game-stats">
-        <div id="timer-display">TIME: 00:00</div>
-        <div id="score-display">MATCHES: 0/8</div>
+        <div id="timer-display">TIME: 00:00 / זמן</div>
+        <div id="score-display">MATCHES: 0/8 / התאמות</div>
     </div>
 
     <div id="game-board">
@@ -130,9 +130,9 @@
     </div>
 
     <div id="win-modal">
-        <h1 style="font-size: 4rem; color: var(--gold);">TRAVEL COMPLETE!</h1>
+        <h1 style="font-size: 4rem; color: var(--gold);">EXCELLENT! / כל הכבוד!</h1>
         <h2 id="final-time"></h2>
-        <button class="btn" onclick="location.reload()">NEW TRIP / שחק שוב</button>
+        <button class="btn" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
     <script>
@@ -146,33 +146,27 @@
         let dragTarget = null, grabX, grabY, solved = 0, clock = 0, timerRef = null;
 
         function initSystem() {
-            window.speechSynthesis.getVoices();
+            // Unlocks audio engine on first tap
+            const msg = new SpeechSynthesisUtterance(' ');
+            window.speechSynthesis.speak(msg);
             document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'block';
             renderLevels();
         }
 
-        function playVoice(e, txt) {
-            e.stopPropagation();
+        function playVoice(txt) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(txt);
             msg.lang = 'en-US';
-            msg.rate = 0.8;
+            msg.rate = 0.85;
             window.speechSynthesis.speak(msg);
-        }
-
-        function runTimer() {
-            clock++;
-            const m = Math.floor(clock / 60).toString().padStart(2, '0');
-            const s = (clock % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').innerText = `TIME: ${m}:${s}`;
         }
 
         function renderLevels() {
             const container = document.getElementById('lvl-btns');
             for(let i=1; i<=4; i++) {
                 const b = document.createElement('button');
-                b.className = 'btn'; b.innerText = `LEVEL ${i}`;
+                b.className = 'btn'; b.innerText = `LEVEL ${i} / שלב`;
                 b.onclick = () => startLevel(i);
                 container.appendChild(b);
             }
@@ -182,7 +176,12 @@
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('game-stats').style.display = 'flex';
             document.getElementById('game-board').style.display = 'grid';
-            timerRef = setInterval(runTimer, 1000);
+            timerRef = setInterval(() => {
+                clock++;
+                const m = Math.floor(clock / 60).toString().padStart(2, '0');
+                const s = (clock % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `TIME: ${m}:${s} / זמן`;
+            }, 1000);
 
             const items = database[lvl];
             const flagDiv = document.getElementById('flag-col');
@@ -194,9 +193,20 @@
                 unit.dataset.country = d.n;
                 unit.innerHTML = `
                     <div class="flag-card">${d.e}</div>
-                    <button class="big-audio-btn" onpointerdown="playVoice(event, '${d.n}')">🔊</button>
+                    <button class="big-audio-btn">🔊</button>
                 `;
-                unit.onpointerdown = (e) => { if(e.target.tagName !== 'BUTTON') pickup(e, unit); };
+                
+                // AUDIO BUTTON CLICK
+                unit.querySelector('.big-audio-btn').addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    playVoice(d.n);
+                });
+
+                // DRAG START
+                unit.querySelector('.flag-card').addEventListener('pointerdown', (e) => {
+                    pickup(e, unit);
+                });
+
                 flagDiv.appendChild(unit);
             });
 
@@ -231,12 +241,12 @@
                             slot.innerHTML = `<span style="font-size:3rem; margin-right:20px;">${dragTarget.querySelector('.flag-card').innerText}</span> ${slot.dataset.country}`;
                             dragTarget.remove();
                             solved++;
-                            document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
+                            document.getElementById('score-display').innerText = `MATCHES: ${solved}/8 / התאמות`;
                             matched = true;
                             if(solved === 8) {
                                 clearInterval(timerRef);
                                 confetti();
-                                document.getElementById('final-time').innerText = `TIME: ${document.getElementById('timer-display').innerText.split(': ')[1]}`;
+                                document.getElementById('final-time').innerText = document.getElementById('timer-display').innerText;
                                 document.getElementById('win-modal').style.display = 'flex';
                             }
                             break;
