@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Global Matcher: Drag & Drop</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --map-bg: #e3dcd2;
+            --ink: #2c3e50;
+            --tag-paper: #fcfaf0;
+            --gold: #d4af37;
+            --correct: #27ae60;
+            --wrong: #c0392b;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background-color: var(--map-bg);
+            /* Vintage map background pattern */
+            background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            /* Prevents scrolling during drag on mobile */
+            touch-action: none; 
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px double var(--ink);
+            width: 100%;
+            max-width: 700px;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 1px white;
+        }
+
+        h1 { margin: 0; font-size: 2rem; color: #1a252f; }
+        .subtitle { margin: 5px 0; font-size: 1rem; color: #7f8c8d; font-style: italic; }
+
+        #level-buttons { margin-top: 15px; }
+        .lvl-btn {
+            background: rgba(255,255,255,0.7);
+            border: 2px solid var(--ink);
+            color: var(--ink);
+            padding: 12px 24px;
+            cursor: pointer;
+            margin: 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        }
+        .lvl-btn:hover { background: var(--gold); border-color: var(--gold); color: white; }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: 100px 1fr; /* Narrow Flags, Wide Names */
+            gap: 20px;
+            width: 100%;
+            max-width: 650px;
+            display: none; /* Hidden at start */
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* The Draggable Flag Tags */
+        .flag-tag {
+            background: var(--tag-paper);
+            border: 2px solid #8e735b;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: grab;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+            user-select: none;
+            -webkit-user-drag: element; /* iOS requirement */
+        }
+        .flag-tag:hover { transform: translateY(-2px); box-shadow: 0 7px 15px rgba(0,0,0,0.25); }
+        .flag-tag:active { cursor: grabbing; transform: scale(1.05); }
+        
+        .flag-tag::after { /* Small "hole" for the tag string */
+            content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+            width: 10px; height: 10px; background: var(--map-bg); border-radius: 50%;
+            border: 1px solid #8e735b; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .flag-tag .emoji { font-size: 3rem; line-height: 1; pointer-events: none; }
+
+        /* The Name Drop Zones */
+        .name-zone {
+            background: rgba(255,255,255,0.5);
+            border: 3px dashed #7f8c8d;
+            border-radius: 10px;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 20px;
+            position: relative;
+            transition: background-color 0.3s, border-color 0.3s, transform 0.2s;
+        }
+        .name-zone.hovered { background: rgba(212, 175, 55, 0.15); border-color: var(--gold); }
+        
+        /* Feedback colors for the zones */
+        .name-zone.correct { background-color: var(--correct); border-style: solid; border-color: #1e8449; animation: bounceCorrect 0.5s; color: white !important;}
+        .name-zone.wrong { background-color: var(--wrong); border-style: solid; border-color: #922b21; animation: shakeWrong 0.5s; }
+        
+        /* Hide text inside zones after success */
+        .name-zone.correct .country-text { opacity: 0; }
+
+        .country-text { text-align: center; pointer-events: none; }
+        .country-name { font-size: 1.2rem; font-weight: bold; line-height: 1.2; }
+        .hebrew-hint { font-size: 0.9rem; opacity: 0.7; margin-top: 3px; font-family: sans-serif; }
+
+        /* Confetti Canvas should be on top */
+        #confetti-canvas { position: fixed; top:0; left:0; pointer-events: none; width: 100%; height: 100%; z-index: 1000; }
+
+        #overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .win-box { background: var(--tag-paper); color: var(--ink); padding: 40px; border-radius: 20px; text-align: center; border: 5px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* --- Animations --- */
+        @keyframes bounceCorrect {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes shakeWrong {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        /* Mobile adjustment */
+        @media (max-width: 500px) {
+            h1 { font-size: 1.5rem; }
+            #game-board { grid-template-columns: 80px 1fr; gap: 10px; }
+            .flag-tag .emoji { font-size: 2.5rem; }
+            .country-name { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu" class="header">
+        <h1>🌍 Global Matcher</h1>
+        <p class="subtitle">Drag the Flag to its Name / גרור את הדגל לשם</p>
+        <div id="level-buttons"></div>
+    </div>
+
+    <div id="game-board">
+        <div class="column" id="flags-col"></div>
+        <div class="column" id="names-col"></div>
+    </div>
+
+    <div id="overlay">
+        <div class="win-box">
+            <h1 style="margin-top:0">PASSPORT STAMPED! ✈️</h1>
+            <p>Ready for the next leg of the journey? / מוכן לשלב הבא?</p>
+            <button class="lvl-btn" onclick="location.reload()" style="background: var(--ink); color: white; border: none; font-size: 1.2rem;">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const levels = {
+            1: [{e:"🇦🇷", n:"Argentina", h:"ארגנטינה"}, {e:"🇦🇺", n:"Australia", h:"אוסטרליה"}, {e:"🇧🇷", n:"Brazil", h:"ברזיל"}, {e:"🇨🇦", n:"Canada", h:"קנדה"}, {e:"🇨🇴", n:"Colombia", h:"קולומביה"}, {e:"🇲🇽", n:"Mexico", h:"מקסיקו"}, {e:"🇵🇦", n:"Panama", h:"פנמה"}, {e:"🇺🇸", n:"America", h:"אמריקה"}],
+            2: [{e:"🇮🇹", n:"Italy", h:"איטליה"}, {e:"🇧🇪", n:"Belgium", h:"בלגיה"}, {e:"🇯🇵", n:"Japan", h:"יפן"}, {e:"🇷🇺", n:"Russia", h:"רוסיה"}, {e:"🇺🇦", n:"Ukraine", h:"אוקראינה"}, {e:"🇪🇹", n:"Ethiopia", h:"אתיופיה"}, {e:"🇬🇧", n:"England", h:"אנגליה"}, {e:"🇩🇪", n:"Germany", h:"גרמניה"}],
+            3: [{e:"🇿🇦", n:"South Africa", h:"דרום אפריקה"}, {e:"🇭🇺", n:"Hungary", h:"הונגריה"}, {e:"🇵🇱", n:"Poland", h:"פולין"}, {e:"🇳🇴", n:"Norway", h:"נורווגיה"}, {e:"🇹🇭", n:"Thailand", h:"תאילנד"}, {e:"🇸🇪", n:"Sweden", h:"שוודיה"}, {e:"🇨🇳", n:"China", h:"סין"}, {e:"🇮🇪", n:"Ireland", h:"אירלנד"}],
+            4: [{e:"🇪🇬", n:"Egypt", h:"מצרים"}, {e:"🇬🇷", n:"Greece", h:"יוון"}, {e:"🇨🇾", n:"Cyprus", h:"קפריסין"}, {e:"🇫🇷", n:"France", h:"צרפת"}, {e:"🇮🇳", n:"India", h:"הודו"}, {e:"🇨🇭", n:"Switzerland", h:"שוויץ"}, {e:"🇳🇱", n:"Netherlands", h:"הולנד"}, {e:"🇱🇹", n:"Lithuania", h:"ליטא"}]
+        };
+
+        let matches = 0, currentLevelData = [], draggedData = null;
+
+        function speak(t) { window.speechSynthesis.cancel(); const m = new SynthesisUtterance(t); m.lang = 'en-US'; m.rate = 0.9; window.speechSynthesis.speak(m); }
+
+        function setupMenu() {
+            const btnContainer = document.getElementById('level-buttons');
+            for(let i=1; i<=4; i++) {
+                const b = document.createElement('button'); b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
+                b.onclick = () => startLevel(i); btnContainer.appendChild(b);
+            }
+        }
+
+        function startLevel(lvl) {
+            currentLevelData = levels[lvl];
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game-board').style.display = 'grid';
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const fCol = document.getElementById('flags-col');
+            const nCol = document.getElementById('names-col');
+            fCol.innerHTML = ''; nCol.innerHTML = ''; matches = 0;
+            
+            // Shuffle both columns independently
+            const shuffledFlags = [...currentLevelData].sort(() => Math.random() - 0.5);
+            const shuffledNames = [...currentLevelData].sort(() => Math.random() - 0.5);
+
+            // 1. Render DRAGGABLE Flags ( Luggage Tags)
+            shuffledFlags.forEach(item => {
+                const tag = document.createElement('div');
+                tag.className = 'flag-tag';
+                tag.id = `flag-${item.n}`; // Assign ID for identification
+                tag.draggable = true;
+                tag.innerHTML = `<span class="emoji">${item.e}</span>`;
+                
+                // Drag start event
+                tag.addEventListener('dragstart', (e) => {
+                    draggedData = { name: item.n, elementId: tag.id };
+                    e.dataTransfer.setData('text/plain', tag.id); // Desktop drag req.
+                    speak(item.n);
+                });
+                
+                fCol.appendChild(tag);
+            });
+
+            // 2. Render DROP ZONES ( Country Names)
+            shuffledNames.forEach(item => {
+                const zone = document.createElement('div');
+                zone.className = 'name-zone';
+                zone.dataset.country = item.n; // Store expected country name
+
+                zone.innerHTML = `
+                    <div class="country-text">
+                        <div class="country-name">${item.n}</div>
+                        <div class="hebrew-hint">${item.h}</div>
+                    </div>
+                `;
+
+                // Drag and drop events for the zones
+                zone.addEventListener('dragover', (e) => e.preventDefault()); // MUST prevent default to enable drop
+                zone.addEventListener('dragenter', () => zone.classList.add('hovered'));
+                zone.addEventListener('dragleave', () => zone.classList.remove('hovered'));
+
+                zone.addEventListener('drop', handleDrop);
+
+                nCol.appendChild(zone);
+            });
+        }
+
+        // --- Core Drop Logic ---
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetZone = e.currentTarget;
+            targetZone.classList.remove('hovered');
+
+            // 1. Basic checks
+            if(!draggedData || targetZone.classList.contains('correct')) return;
+
+            const draggedTag = document.getElementById(draggedData.elementId);
+            const expectedName = targetZone.dataset.country;
+            const droppedName = draggedData.name;
+
+            // 2. Match Check
+            if (droppedName === expectedName) {
+                // --- CORRECT MATCH ---
+                targetZone.classList.add('correct');
+                
+                // Audio feedback
+                speak(`Correct! ${droppedName}`);
+                
+                // Smoothly insert the flag emoji into the zone
+                const emojiSpan = draggedTag.querySelector('.emoji');
+                const emojiCopy = emojiSpan.cloneNode(true);
+                emojiCopy.style.fontSize = '2.2rem'; // Shrink it slightly to fit
+                emojiCopy.style.marginRight = '10px';
+                targetZone.prepend(emojiCopy);
+
+                // Hide the original tag (using scale to keep column spacing)
+                draggedTag.style.transform = 'scale(0)';
+                draggedTag.style.opacity = '0';
+                setTimeout(() => draggedTag.style.display = 'none', 300);
+
+                matches++;
+                if (matches === 8) {
+                    setTimeout(() => { confetti({ particleCount: 200, spread: 80 }); document.getElementById('overlay').style.display = 'flex'; }, 800);
+                }
+
+            } else {
+                // --- WRONG MATCH ---
+                targetZone.classList.add('wrong');
+                speak(`No, that is not ${expectedName}`);
+                
+                // Remove the error color after the shake animation
+                setTimeout(() => targetZone.classList.remove('wrong'), 800);
+            }
+
+            // Reset dragged memory
+            draggedData = null;
+        }
+
+        // --- MOBILE TOUCH SUPPORT (Since Mobile Browsers don't support native HTML5 Drag) ---
+        // This makes the game playable by tapping flag then tapping name, but looks like drag.
+        let activeMobileTag = null;
+        
+        document.addEventListener('touchstart', (e) => {
+            const tag = e.target.closest('.flag-tag');
+            if(!tag) return;
+            activeMobileTag = tag;
+            const country = tag.id.replace('flag-', '');
+            draggedData = { name: country, elementId: tag.id };
+            speak(country);
+            tag.style.transition = 'none'; // Temporarily disable transition
+            tag.style.transform = 'scale(1.1)';
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if(!activeMobileTag) return;
+            const touch = e.touches[0];
+            // Visually "move" the tag on mobile (basic implementation)
+            activeMobileTag.style.position = 'fixed';
+            activeMobileTag.style.zIndex = '1000';
+            activeMobileTag.style.left = `${touch.clientX - 40}px`;
+            activeMobileTag.style.top = `${touch.clientY - 40}px`;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if(!activeMobileTag) return;
+            activeMobileTag.style.transition = ''; // Reset transition
+            const touch = e.changedTouches[0];
+            
+            // Check if dropped over a zone
+            const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetZone = elem.closest('.name-zone');
+            
+            if(targetZone) {
+                // Synthesize the drop event
+                const simulatedEvent = { preventDefault: () => {}, currentTarget: targetZone };
+                handleDrop(simulatedEvent);
+            }
+            
+            // Reset Mobile state
+            activeMobileTag.style.position = ''; activeMobileTag.style.left = ''; activeMobileTag.style.top = ''; activeMobileTag.style.zIndex = ''; activeMobileTag.style.transform = '';
+            activeMobileTag = null;
+        });
+
+        setupMenu();
+    </script>
+</body>
+</html>
