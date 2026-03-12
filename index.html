@@ -2,235 +2,209 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Passport Pro: Global Matcher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Global Matcher Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --bg-soft: #e8e2d6; /* Softer, lighter parchment */
-            --paper-white: #ffffff;
-            --ink-dark: #1a1a1a; /* High contrast text */
-            --gold-accent: #b8860b;
-            --success-green: #2ecc71;
-            --error-red: #e74c3c;
-        }
-
+        /* 1. HIGH CONTRAST & CLEAN FONT */
         body {
-            font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg-soft);
-            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            font-family: 'Arial Black', Gadget, sans-serif;
+            background-color: #f0f4f7; /* Very light blue-grey, soft on eyes */
             margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; touch-action: none;
+            touch-action: none; /* Crucial for stopping browser jitter */
         }
 
         .header {
-            text-align: center; color: var(--ink-dark);
-            border-bottom: 3px solid var(--gold-accent);
-            width: 100%; max-width: 700px;
-            padding-bottom: 15px; margin-bottom: 30px;
+            text-align: center; color: #2c3e50;
+            border-bottom: 5px solid #d4af37;
+            width: 100%; max-width: 800px;
+            margin-bottom: 30px; padding-bottom: 10px;
         }
 
         .lvl-btn {
-            background: var(--gold-accent); border: none; padding: 15px 30px;
-            margin: 10px; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; color: white; font-size: 1.1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
-        }
-        .lvl-btn:hover { transform: translateY(-2px); background: #966d09; }
-
-        /* Layout Alignment */
-        .game-container {
-            display: none; /* Hidden until start */
-            grid-template-columns: 140px 1fr; /* Fixed width for flags, flexible for names */
-            gap: 40px; width: 100%; max-width: 800px;
-            align-items: start;
+            background: #2c3e50; color: white; border: none;
+            padding: 20px 40px; margin: 10px; border-radius: 10px;
+            font-size: 1.5rem; cursor: pointer;
         }
 
-        .column { display: flex; flex-direction: column; gap: 15px; }
+        /* 2. ALIGNED SIDE-BY-SIDE LAYOUT */
+        .game-grid {
+            display: none; /* Hidden until level select */
+            grid-template-columns: 150px 1fr; 
+            gap: 50px; width: 100%; max-width: 900px;
+        }
 
-        /* Draggable Flags */
-        .flag-card {
-            width: 110px; height: 75px; background: white;
-            border-radius: 10px; border: 2px solid #ccc;
+        .col { display: flex; flex-direction: column; gap: 20px; }
+
+        /* 3. THE FLAG TAGS */
+        .flag-item {
+            width: 130px; height: 90px; background: white;
+            border: 3px solid #2c3e50; border-radius: 15px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; cursor: grab; position: relative;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            user-select: none; z-index: 10;
+            font-size: 4rem; cursor: move; position: relative;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            z-index: 10; touch-action: none;
         }
 
-        /* Destination Drop Zones */
+        /* 4. THE NAME BOXES */
         .name-box {
-            height: 75px; background: white;
-            border: 2px dashed #999; border-radius: 12px;
+            height: 90px; background: white;
+            border: 4px dashed #bdc3c7; border-radius: 15px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 25px; color: var(--ink-dark); font-weight: 800;
-            position: relative; transition: 0.3s; font-size: 1.4rem;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            padding: 0 30px; font-size: 1.8rem; color: #1a1a1a;
+            position: relative; box-sizing: border-box;
         }
 
-        .audio-icon {
-            background: #f0f0f0; border: 2px solid #ddd; width: 45px; height: 45px;
-            border-radius: 50%; color: var(--ink-dark); cursor: pointer;
+        /* 5. THE AUDIO BUTTON (PROMINENT) */
+        .speaker-btn {
+            background: #d4af37; border: none; width: 60px; height: 60px;
+            border-radius: 50%; color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; transition: 0.2s; z-index: 20;
-        }
-        .audio-icon:hover { background: var(--gold-accent); color: white; border-color: var(--gold-accent); }
-
-        /* Success/Error States */
-        .name-box.correct {
-            background: var(--success-green); border: 2px solid #27ae60;
-            color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+            font-size: 1.8rem; box-shadow: 0 4px 0 #a6892c;
         }
 
-        .name-box.wrong { background: var(--error-red); border-color: #c0392b; animation: shake 0.4s; color: white; }
+        /* FEEDBACK STATES */
+        .name-box.correct { background: #27ae60; border: 4px solid #fff; color: white; }
+        .name-box.wrong { background: #c0392b; color: white; animation: shake 0.4s; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-15px); }
+            75% { transform: translateX(15px); }
         }
 
-        #win-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center;
+        #win-screen {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            flex-direction: column; align-items: center; justify-content: center;
         }
-        .win-modal { background: white; padding: 60px; border-radius: 25px; text-align: center; border: 8px solid var(--gold-accent); }
     </style>
 </head>
 <body>
 
-    <div id="start-menu" class="header">
-        <h1>🌎 Global Destination Match</h1>
-        <p>Listen and Drag the Flag / הקש על הרמקול וגרור את הדגל</p>
-        <div id="lvl-picker"></div>
+    <div id="menu" class="header">
+        <h1>GLOBAL MATCHING PRO</h1>
+        <div id="level-list"></div>
     </div>
 
-    <div class="game-container" id="main-game">
-        <div class="column" id="flag-pile"></div>
-        <div class="column" id="name-pile"></div>
+    <div class="game-grid" id="board">
+        <div class="col" id="flags"></div>
+        <div class="col" id="names"></div>
     </div>
 
-    <div id="win-overlay">
-        <div class="win-modal">
-            <h1 style="font-size: 2.5rem; margin-bottom: 20px;">WELL DONE! ✈️</h1>
-            <button class="lvl-btn" onclick="location.reload()">Return to Menu</button>
-        </div>
+    <div id="win-screen">
+        <h1 style="color:white; font-size: 4rem;">EXCELLENT! ✈️</h1>
+        <button class="lvl-btn" onclick="location.reload()">PLAY AGAIN</button>
     </div>
 
     <script>
-        const gameData = {
+        const dataSet = {
             1: [{e:"🇦🇷", n:"Argentina"}, {e:"🇦🇺", n:"Australia"}, {e:"🇧🇷", n:"Brazil"}, {e:"🇨🇦", n:"Canada"}, {e:"🇨🇴", n:"Colombia"}, {e:"🇲🇽", n:"Mexico"}, {e:"🇵🇦", n:"Panama"}, {e:"🇺🇸", n:"America"}],
             2: [{e:"🇮🇹", n:"Italy"}, {e:"🇧🇪", n:"Belgium"}, {e:"🇯🇵", n:"Japan"}, {e:"🇷🇺", n:"Russia"}, {e:"🇺🇦", n:"Ukraine"}, {e:"🇪🇹", n:"Ethiopia"}, {e:"🇬🇧", n:"England"}, {e:"🇩🇪", n:"Germany"}],
             3: [{e:"🇿🇦", n:"South Africa"}, {e:"🇭🇺", n:"Hungary"}, {e:"🇵🇱", n:"Poland"}, {e:"🇳🇴", n:"Norway"}, {e:"🇹🇭", n:"Thailand"}, {e:"🇸🇪", n:"Sweden"}, {e:"🇨🇳", n:"China"}, {e:"🇮🇪", n:"Ireland"}],
             4: [{e:"🇪🇬", n:"Egypt"}, {e:"🇬🇷", n:"Greece"}, {e:"🇨🇾", n:"Cyprus"}, {e:"🇫🇷", n:"France"}, {e:"🇮🇳", n:"India"}, {e:"🇨🇭", n:"Switzerland"}, {e:"🇳🇱", n:"Netherlands"}, {e:"🇱🇹", n:"Lithuania"}]
         };
 
-        let currentDrag = null, startX, startY, matches = 0;
+        let activeObj = null, offset = {x:0, y:0}, winCount = 0;
 
-        function playSound(text) {
+        // FIXED AUDIO FUNCTION
+        function speak(val) {
+            if (!val) return;
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.85;
-            window.speechSynthesis.speak(utterance);
+            const speech = new SpeechSynthesisUtterance(val);
+            speech.lang = 'en-US';
+            window.speechSynthesis.speak(speech);
         }
 
         function createMenu() {
-            const picker = document.getElementById('lvl-picker');
+            const m = document.getElementById('level-list');
             for(let i=1; i<=4; i++) {
                 const b = document.createElement('button');
-                b.className = 'lvl-btn'; b.innerText = `Level ${i}`;
-                b.onclick = () => startGame(i);
-                picker.appendChild(b);
+                b.className = 'lvl-btn'; b.innerText = `LEVEL ${i}`;
+                b.onclick = () => initGame(i);
+                m.appendChild(b);
             }
         }
 
-        function startGame(lvl) {
-            document.getElementById('start-menu').style.display = 'none';
-            document.getElementById('main-game').style.display = 'grid';
-            const data = gameData[lvl];
+        function initGame(lvl) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('board').style.display = 'grid';
+            const currentItems = dataSet[lvl];
             
-            const flagCol = document.getElementById('flag-pile');
-            const nameCol = document.getElementById('name-pile');
+            const flagArea = document.getElementById('flags');
+            const nameArea = document.getElementById('names');
 
-            // Shuffle and Build
-            [...data].sort(()=>Math.random()-0.5).forEach(item => {
+            [...currentItems].sort(()=>Math.random()-0.5).forEach(item => {
                 const f = document.createElement('div');
-                f.className = 'flag-card'; f.innerText = item.e; f.dataset.name = item.n;
-                f.onpointerdown = handleDragStart;
-                flagCol.appendChild(f);
+                f.className = 'flag-item'; f.innerText = item.e; f.dataset.country = item.n;
+                // Use Pointer Events for cross-platform support (Touch + Mouse)
+                f.onpointerdown = (e) => startMove(e, f);
+                flagArea.appendChild(f);
             });
 
-            [...data].sort(()=>Math.random()-0.5).forEach(item => {
-                const z = document.createElement('div');
-                z.className = 'name-box'; z.dataset.name = item.n;
-                z.innerHTML = `<span>${item.n}</span> <div class="audio-icon" onpointerdown="event.stopPropagation(); playSound('${item.n}')">🔊</div>`;
-                nameCol.appendChild(z);
+            [...currentItems].sort(()=>Math.random()-0.5).forEach(item => {
+                const n = document.createElement('div');
+                n.className = 'name-box'; n.dataset.country = item.n;
+                n.innerHTML = `<span>${item.n}</span> 
+                    <button class="speaker-btn" onpointerdown="event.stopPropagation(); speak('${item.n}')">🔊</button>`;
+                nameArea.appendChild(n);
             });
         }
 
-        function handleDragStart(e) {
-            currentDrag = e.currentTarget;
-            currentDrag.style.transition = 'none';
-            currentDrag.style.zIndex = 1000;
+        function startMove(e, el) {
+            activeObj = el;
+            activeObj.style.transition = 'none';
+            activeObj.style.zIndex = '9999';
+            const b = activeObj.getBoundingClientRect();
+            offset.x = e.clientX - b.left;
+            offset.y = e.clientY - b.top;
             
-            const rect = currentDrag.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
+            activeObj.style.position = 'fixed';
+            activeObj.style.left = (e.clientX - offset.x) + 'px';
+            activeObj.style.top = (e.clientY - offset.y) + 'px';
 
-            // Immediate placement
-            currentDrag.style.position = 'fixed';
-            currentDrag.style.left = (e.clientX - startX) + 'px';
-            currentDrag.style.top = (e.clientY - startY) + 'px';
+            document.onpointermove = (ev) => {
+                if(!activeObj) return;
+                activeObj.style.left = (ev.clientX - offset.x) + 'px';
+                activeObj.style.top = (ev.clientY - offset.y) + 'px';
+            };
 
-            document.onpointermove = handleDragMove;
-            document.onpointerup = handleDragEnd;
-            playSound(currentDrag.dataset.name);
-        }
+            document.onpointerup = (ev) => {
+                const zones = document.getElementsByClassName('name-box');
+                let found = false;
 
-        function handleDragMove(e) {
-            if(!currentDrag) return;
-            currentDrag.style.left = (e.clientX - startX) + 'px';
-            currentDrag.style.top = (e.clientY - startY) + 'px';
-        }
-
-        function handleDragEnd(e) {
-            const zones = document.getElementsByClassName('name-box');
-            let success = false;
-
-            for (let z of zones) {
-                const r = z.getBoundingClientRect();
-                if (e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom) {
-                    if (z.dataset.name === currentDrag.dataset.name && !z.classList.contains('correct')) {
-                        // MATCH
-                        z.classList.add('correct');
-                        z.innerHTML = `<span style="font-size:2rem">${currentDrag.innerText}</span> <span>${z.dataset.name}</span>`;
-                        currentDrag.remove();
-                        matches++;
-                        playSound("Excellent");
-                        success = true;
-                        if(matches === 8) { 
-                            setTimeout(() => { confetti(); document.getElementById('win-overlay').style.display='flex'; }, 400);
+                for(let z of zones) {
+                    const r = z.getBoundingClientRect();
+                    if(ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
+                        if(z.dataset.country === activeObj.dataset.country && !z.classList.contains('correct')) {
+                            // CORRECT
+                            z.classList.add('correct');
+                            z.innerHTML = `<span style="font-size:3rem">${activeObj.innerText}</span> <span>${z.dataset.country}</span>`;
+                            activeObj.remove();
+                            winCount++;
+                            speak("Correct");
+                            found = true;
+                            if(winCount === 8) { confetti(); document.getElementById('win-screen').style.display='flex'; }
+                            break;
+                        } else if (!z.classList.contains('correct')) {
+                            // WRONG
+                            z.classList.add('wrong');
+                            setTimeout(() => z.classList.remove('wrong'), 500);
+                            speak("No");
                         }
-                        break;
-                    } else if (!z.classList.contains('correct')) {
-                        // WRONG
-                        z.classList.add('wrong');
-                        setTimeout(() => z.classList.remove('wrong'), 500);
-                        playSound("Try again");
                     }
                 }
-            }
 
-            if (!success && currentDrag) {
-                currentDrag.style.transition = '0.3s';
-                currentDrag.style.position = 'relative';
-                currentDrag.style.left = '0';
-                currentDrag.style.top = '0';
-                currentDrag.style.zIndex = 10;
-            }
-            currentDrag = null; document.onpointermove = null; document.onpointerup = null;
+                if(!found && activeObj) {
+                    activeObj.style.transition = '0.3s';
+                    activeObj.style.position = 'relative';
+                    activeObj.style.left = '0'; activeObj.style.top = '0';
+                }
+                activeObj = null;
+                document.onpointermove = null;
+                document.onpointerup = null;
+            };
         }
 
         createMenu();
