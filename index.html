@@ -3,47 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Matching Countries Game</title>
+    <title>Matching Countries</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
 
         :root {
-            --paper-dark: #0d1b2a; 
-            --gold: #b8860b;
             --navy: #2c3e50;
+            --gold: #b8860b;
+            --paper: #0d1b2a;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body { 
             width: 100%; height: 100%; overflow: hidden; 
-            margin: 0; padding: 0;
+            margin: 0; padding: 0; touch-action: none;
         }
 
         body {
             font-family: 'Assistant', sans-serif;
-            /* Washed out world map background */
-            background: linear-gradient(rgba(229, 224, 216, 0.92), rgba(229, 224, 216, 0.92)), 
-                        url('https://www.transparenttextures.com/patterns/world-map.png'), #e5e0d8;
+            /* Enhanced Washed Out World Map */
+            background: 
+                linear-gradient(rgba(240, 235, 225, 0.9), rgba(240, 235, 225, 0.9)),
+                url('https://www.transparenttextures.com/patterns/world-map.png'),
+                #e5e0d8;
             background-size: cover;
             display: flex; flex-direction: column; align-items: center;
-            touch-action: none;
         }
 
         #unlock-screen, #win-modal {
             position: fixed; inset: 0; background: var(--navy); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center; padding: 20px;
+            color: white; text-align: center;
         }
 
-        .header-container { width: 100%; max-width: 800px; text-align: center; padding: 5px; }
-        h1 { color: var(--navy); margin: 5px 0; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
+        .header-container { width: 100%; max-width: 800px; text-align: center; padding: 10px; }
+        h1 { color: var(--navy); margin: 5px; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
 
         .instruction-box {
-            background: rgba(255, 255, 255, 0.85); border: 2px dashed var(--gold);
-            color: var(--navy); padding: 8px; border-radius: 8px;
-            margin: 5px auto; width: 90%; font-weight: 800; font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.8); border: 2px dashed var(--gold);
+            color: var(--navy); padding: 10px; border-radius: 8px;
+            margin: 10px auto; width: 90%; font-weight: 800;
         }
 
         .lvl-grid {
@@ -53,61 +54,64 @@
 
         .lvl-btn {
             background: var(--navy); color: white; border: none;
-            padding: 20px 5px; border-radius: 12px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 0 #1a252f;
-            display: flex; flex-direction: column; align-items: center; font-size: 1.1rem;
+            padding: 20px 10px; border-radius: 12px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 4px 0 #151f29;
+            display: flex; flex-direction: column; align-items: center;
         }
-        .lvl-btn span { font-size: 0.9rem; opacity: 0.8; margin-top: 6px; }
+        .lvl-btn span { font-size: 0.85rem; opacity: 0.8; margin-top: 5px; }
 
-        .nav-bar { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; margin-bottom: 5px; }
+        .nav-bar { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
         .back-btn {
-            background: #e67e22; color: white; border: none; padding: 10px 20px;
-            border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem;
-            box-shadow: 0 3px 0 #a05817;
+            background: #e67e22; color: white; border: none; padding: 8px 15px;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
         #game-stats {
             display: none; width: 90%; max-width: 600px; justify-content: space-around;
-            background: var(--navy); padding: 8px; border-radius: 25px;
-            color: white; font-size: 1rem; font-weight: bold; margin-bottom: 8px;
+            background: var(--navy); padding: 10px; border-radius: 30px;
+            color: white; font-weight: bold; margin-bottom: 10px;
         }
 
         #game-board {
-            display: none; grid-template-columns: 1fr 1.5fr; gap: 12px;
-            width: 95%; max-width: 800px; height: 60vh; padding: 5px;
+            display: none; grid-template-columns: 1fr 1.5fr; gap: 10px;
+            width: 95%; max-width: 800px; height: 60vh;
         }
 
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
-        .flag-unit { display: flex; align-items: center; gap: 8px; height: 11%; }
+        
+        .flag-unit { 
+            display: flex; align-items: center; gap: 10px; height: 11%; 
+            position: relative;
+        }
 
-        /* FIXED DRAG GLITCH: Added min-width and contained aspect ratio */
+        /* FIX: Prevents the flag from warping or changing size during drag */
         .flag-card {
-            aspect-ratio: 3/2; height: 100%; min-width: 60px;
-            background: white; border-radius: 6px;
-            border: 2px solid #555; display: flex; align-items: center; justify-content: center;
-            font-size: 2.2rem; cursor: grab; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-            user-select: none; -webkit-user-drag: none;
+            width: 70px; height: 45px; /* Fixed physical size */
+            background: white; border-radius: 5px; border: 2px solid #444;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10; touch-action: none;
+            user-select: none;
         }
 
         .big-audio-btn {
             width: 44px; height: 44px; background: var(--gold); border-radius: 50%;
             border: none; color: white; font-size: 1.2rem; cursor: pointer;
-            box-shadow: 0 3px 0 #7a5908;
+            box-shadow: 0 3px 0 #8a6509;
         }
 
         .name-slot {
-            height: 11%; width: 100%; background: var(--paper-dark); border-radius: 8px;
+            height: 11%; width: 100%; background: var(--paper); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 900; font-family: 'Montserrat', sans-serif;
-            font-size: 1.1rem; text-transform: uppercase; padding: 0 5px; text-align: center;
+            font-size: 1.1rem; text-transform: uppercase; text-align: center;
         }
 
-        .name-slot.correct { background: #27ae60 !important; border-color: #2ecc71; }
-        
+        .name-slot.correct { background: #27ae60 !important; }
+
         .btn-main {
             background: var(--gold); color: white; border: none;
-            padding: 18px 45px; border-radius: 12px; font-size: 1.6rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 0 #7a5908;
+            padding: 15px 40px; border-radius: 10px; font-size: 1.5rem; font-weight: bold;
         }
     </style>
 </head>
@@ -115,14 +119,13 @@
 
     <div id="unlock-screen">
         <h1 style="color:white; border:none; font-size: 2.5rem;">Matching Countries</h1>
-        <h2 style="font-family: 'Assistant'; font-size: 1.8rem;">התאמת מדינות</h2>
+        <h2 style="font-family: 'Assistant';">התאמת מדינות</h2>
         <button class="btn-main" onclick="startApp()">START / התחל</button>
     </div>
 
     <div class="header-container" id="game-header" style="display:none;">
         <div id="menu-view">
             <h1>Matching Countries / התאמת מדינות</h1>
-            <div class="instruction-box">Choose a Level / בחרו שלב</div>
             <div class="lvl-grid">
                 <button class="lvl-btn" onclick="startLevel(1)">Level One <span>שלב ראשון</span></button>
                 <button class="lvl-btn" onclick="startLevel(2)">Level Two <span>שלב שני</span></button>
@@ -133,8 +136,8 @@
 
         <div id="game-nav" style="display:none;">
             <div class="nav-bar">
-                <button class="back-btn" onclick="goBack()">חזור / BACK</button>
-                <h1>Matching Countries</h1>
+                <button class="back-btn" onclick="location.reload()">חזור / BACK</button>
+                <h1 style="font-size: 1.1rem;">Matching Countries</h1>
             </div>
             <div class="instruction-box">Drag the flag to the word / גררו את הדגל למילה</div>
         </div>
@@ -151,7 +154,8 @@
     </div>
 
     <div id="win-modal" style="display:none;">
-        <h1 style="font-size: 3rem; color: var(--gold);">EXCELLENT! / כל הכבוד!</h1>
+        <h1 style="font-size: 3rem; color: var(--gold);">EXCELLENT!</h1>
+        <h2>כל הכבוד</h2>
         <button class="btn-main" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
 
@@ -181,16 +185,7 @@
             window.speechSynthesis.speak(msg);
         }
 
-        function goBack() {
-            clearInterval(timerRef);
-            document.getElementById('game-nav').style.display = 'none';
-            document.getElementById('game-stats').style.display = 'none';
-            document.getElementById('game-board').style.display = 'none';
-            document.getElementById('menu-view').style.display = 'block';
-        }
-
         function startLevel(lvl) {
-            playSound(""); 
             document.getElementById('menu-view').style.display = 'none';
             document.getElementById('game-nav').style.display = 'block';
             document.getElementById('game-stats').style.display = 'flex';
@@ -200,9 +195,7 @@
             const nameCol = document.getElementById('name-col');
             flagCol.innerHTML = ''; nameCol.innerHTML = '';
             solved = 0; clock = 0;
-            document.getElementById('score-display').innerText = `MATCHES: 0/8`;
 
-            if(timerRef) clearInterval(timerRef);
             timerRef = setInterval(() => {
                 clock++;
                 const m = Math.floor(clock / 60).toString().padStart(2, '0');
@@ -227,53 +220,49 @@
             });
         }
 
-        let dragEl = null, startX, startY;
+        let dragEl = null, startX, startY, rect;
 
         function pickup(e, el) {
             dragEl = el;
-            const r = dragEl.getBoundingClientRect();
-            startX = e.clientX - r.left; startY = e.clientY - r.top;
+            rect = dragEl.getBoundingClientRect();
+            startX = e.clientX; startY = e.clientY;
             
-            // Lock dimensions to prevent "crazy stretching"
-            dragEl.style.width = r.width + 'px';
-            dragEl.style.height = r.height + 'px';
-            dragEl.style.position = 'fixed'; 
-            dragEl.style.zIndex = '1000';
-            dragEl.style.pointerEvents = 'none';
+            dragEl.style.zIndex = "1000";
+            dragEl.style.transition = "none";
 
             document.onpointermove = (ev) => {
-                dragEl.style.left = (ev.clientX - startX) + 'px';
-                dragEl.style.top = (ev.clientY - startY) + 'px';
+                if(!dragEl) return;
+                const dx = ev.clientX - startX;
+                const dy = ev.clientY - startY;
+                dragEl.style.transform = `translate(${dx}px, ${dy}px)`;
             };
 
             document.onpointerup = (ev) => {
+                if(!dragEl) return;
                 const slots = document.getElementsByClassName('name-slot');
                 let found = false;
+                
                 for (let s of slots) {
-                    const rect = s.getBoundingClientRect();
-                    if (ev.clientX > rect.left && ev.clientX < rect.right && ev.clientY > rect.top && ev.clientY < rect.bottom) {
+                    const sRect = s.getBoundingClientRect();
+                    if (ev.clientX > sRect.left && ev.clientX < sRect.right && ev.clientY > sRect.top && ev.clientY < sRect.bottom) {
                         if (s.dataset.n === dragEl.dataset.n) {
                             s.classList.add('correct');
-                            s.innerHTML = `<span style="font-size:1.8rem; margin-right:10px;">${dragEl.innerText}</span> ${s.dataset.n}`;
+                            s.innerHTML = `<span style="font-size:1.6rem; margin-right:10px;">${dragEl.innerText}</span> ${s.dataset.n}`;
                             dragEl.remove();
                             solved++;
                             document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
                             if (solved === 8) { 
-                                confetti(); 
-                                clearInterval(timerRef); 
+                                confetti(); clearInterval(timerRef); 
                                 setTimeout(() => { document.getElementById('win-modal').style.display = 'flex'; }, 500);
                             }
                             found = true; break;
                         }
                     }
                 }
+                
                 if (!found) {
-                    dragEl.style.position = 'relative'; 
-                    dragEl.style.left = '0'; 
-                    dragEl.style.top = '0'; 
-                    dragEl.style.pointerEvents = 'auto';
-                    dragEl.style.width = 'auto'; // Reset width
-                    dragEl.style.height = '100%'; // Reset height
+                    dragEl.style.transform = "translate(0,0)";
+                    dragEl.style.zIndex = "10";
                 }
                 dragEl = null; document.onpointermove = null; document.onpointerup = null;
             };
