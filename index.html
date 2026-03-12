@@ -9,13 +9,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
 
         :root {
-            --map-bg: #e5e0d8; 
             --paper-dark: #0d1b2a; 
             --gold: #b8860b;
             --navy: #2c3e50;
         }
 
-        /* Essential for iPad: prevents zooming and weird scrolling */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body { 
@@ -25,14 +23,14 @@
 
         body {
             font-family: 'Assistant', sans-serif;
-            background: linear-gradient(rgba(229, 224, 216, 0.9), rgba(229, 224, 216, 0.9)), 
+            /* Washed out world map background */
+            background: linear-gradient(rgba(229, 224, 216, 0.92), rgba(229, 224, 216, 0.92)), 
                         url('https://www.transparenttextures.com/patterns/world-map.png'), #e5e0d8;
             background-size: cover;
             display: flex; flex-direction: column; align-items: center;
             touch-action: none;
         }
 
-        /* Full Screen Overlays */
         #unlock-screen, #win-modal {
             position: fixed; inset: 0; background: var(--navy); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -43,12 +41,11 @@
         h1 { color: var(--navy); margin: 5px 0; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
 
         .instruction-box {
-            background: rgba(255, 255, 255, 0.9); border: 2px dashed var(--gold);
+            background: rgba(255, 255, 255, 0.85); border: 2px dashed var(--gold);
             color: var(--navy); padding: 8px; border-radius: 8px;
             margin: 5px auto; width: 90%; font-weight: 800; font-size: 0.95rem;
         }
 
-        /* Menu View Layout */
         .lvl-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
             width: 90%; max-width: 500px; margin: 20px auto;
@@ -62,7 +59,6 @@
         }
         .lvl-btn span { font-size: 0.9rem; opacity: 0.8; margin-top: 6px; }
 
-        /* Game Navigation Area */
         .nav-bar { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; margin-bottom: 5px; }
         .back-btn {
             background: #e67e22; color: white; border: none; padding: 10px 20px;
@@ -76,7 +72,6 @@
             color: white; font-size: 1rem; font-weight: bold; margin-bottom: 8px;
         }
 
-        /* Game Board height constrained for iPads */
         #game-board {
             display: none; grid-template-columns: 1fr 1.5fr; gap: 12px;
             width: 95%; max-width: 800px; height: 60vh; padding: 5px;
@@ -85,10 +80,13 @@
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
         .flag-unit { display: flex; align-items: center; gap: 8px; height: 11%; }
 
+        /* FIXED DRAG GLITCH: Added min-width and contained aspect ratio */
         .flag-card {
-            aspect-ratio: 3/2; height: 100%; background: white; border-radius: 6px;
+            aspect-ratio: 3/2; height: 100%; min-width: 60px;
+            background: white; border-radius: 6px;
             border: 2px solid #555; display: flex; align-items: center; justify-content: center;
             font-size: 2.2rem; cursor: grab; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            user-select: none; -webkit-user-drag: none;
         }
 
         .big-audio-btn {
@@ -168,12 +166,9 @@
         let solved = 0, clock = 0, timerRef = null;
 
         function startApp() {
-            // Essential for mobile audio: User interaction must trigger speech
             window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance("Welcome");
-            utter.volume = 0; 
+            const utter = new SpeechSynthesisUtterance("");
             window.speechSynthesis.speak(utter);
-            
             document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('game-header').style.display = 'block';
         }
@@ -195,7 +190,7 @@
         }
 
         function startLevel(lvl) {
-            playSound(""); // Refresh audio permission
+            playSound(""); 
             document.getElementById('menu-view').style.display = 'none';
             document.getElementById('game-nav').style.display = 'block';
             document.getElementById('game-stats').style.display = 'flex';
@@ -215,7 +210,6 @@
                 document.getElementById('timer-display').innerText = `TIME: ${m}:${s}`;
             }, 1000);
 
-            // Populate Columns
             [...database[lvl]].sort(() => Math.random() - 0.5).forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'flag-unit';
@@ -239,8 +233,13 @@
             dragEl = el;
             const r = dragEl.getBoundingClientRect();
             startX = e.clientX - r.left; startY = e.clientY - r.top;
-            dragEl.style.position = 'fixed'; dragEl.style.zIndex = '1000';
-            dragEl.style.width = r.width + 'px'; dragEl.style.pointerEvents = 'none';
+            
+            // Lock dimensions to prevent "crazy stretching"
+            dragEl.style.width = r.width + 'px';
+            dragEl.style.height = r.height + 'px';
+            dragEl.style.position = 'fixed'; 
+            dragEl.style.zIndex = '1000';
+            dragEl.style.pointerEvents = 'none';
 
             document.onpointermove = (ev) => {
                 dragEl.style.left = (ev.clientX - startX) + 'px';
@@ -269,8 +268,12 @@
                     }
                 }
                 if (!found) {
-                    dragEl.style.position = 'relative'; dragEl.style.left = '0'; 
-                    dragEl.style.top = '0'; dragEl.style.pointerEvents = 'auto';
+                    dragEl.style.position = 'relative'; 
+                    dragEl.style.left = '0'; 
+                    dragEl.style.top = '0'; 
+                    dragEl.style.pointerEvents = 'auto';
+                    dragEl.style.width = 'auto'; // Reset width
+                    dragEl.style.height = '100%'; // Reset height
                 }
                 dragEl = null; document.onpointermove = null; document.onpointerup = null;
             };
