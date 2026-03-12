@@ -15,72 +15,88 @@
             --text-white: #ffffff;
         }
 
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Assistant', sans-serif;
             background: var(--desk) url('https://www.transparenttextures.com/patterns/dark-wood.png');
             margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; touch-action: none;
+            min-height: 100vh; overflow-x: hidden; touch-action: none;
         }
 
-        /* Essential Start Screen */
         #unlock-screen {
             position: fixed; inset: 0; background: var(--desk); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center;
+            color: white; text-align: center; padding: 20px;
         }
 
         .header {
             text-align: center; color: white; border-bottom: 4px solid var(--gold);
-            width: 95%; max-width: 850px; padding: 10px 0; margin-bottom: 15px;
+            width: 95%; max-width: 800px; padding: 5px 0; margin-bottom: 10px;
+        }
+
+        /* NEW INSTRUCTIONS AREA */
+        .instructions {
+            color: #ccc; font-size: 1.1rem; text-align: center; margin-bottom: 15px;
+            line-height: 1.4; font-weight: 600;
         }
 
         #game-stats {
             display: none; width: 100%; max-width: 700px;
             justify-content: space-around; background: rgba(0,0,0,0.6);
-            padding: 15px; border-radius: 12px; margin-bottom: 20px;
-            color: var(--gold); font-size: 1.6rem; font-weight: bold; border: 2px solid var(--gold);
+            padding: 10px; border-radius: 12px; margin-bottom: 15px;
+            color: var(--gold); font-size: 1.3rem; font-weight: bold; border: 2px solid var(--gold);
         }
 
+        /* RESPONSIVE GRID - Shrinks for iPad/Mobile */
         #game-board {
-            display: none; grid-template-columns: 210px 1fr;
-            gap: 25px; width: 100%; max-width: 950px; padding: 10px;
+            display: none; grid-template-columns: minmax(140px, 180px) 1fr;
+            gap: 15px; width: 100%; max-width: 800px; padding: 5px;
             align-items: center;
         }
 
-        .col { display: flex; flex-direction: column; gap: 15px; }
+        .col { display: flex; flex-direction: column; gap: 10px; }
 
         .flag-unit {
-            display: flex; align-items: center; gap: 12px;
-            z-index: 100; touch-action: none; height: 90px;
+            display: flex; align-items: center; gap: 8px;
+            z-index: 100; touch-action: none; height: 75px;
         }
 
         .flag-card {
-            width: 120px; height: 85px; background: white;
-            border-radius: 10px; border: 3px solid var(--gold);
+            width: 90px; height: 65px; background: white;
+            border-radius: 8px; border: 2px solid var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 4rem; box-shadow: 5px 8px 15px rgba(0,0,0,0.6);
+            font-size: 2.8rem; box-shadow: 3px 5px 10px rgba(0,0,0,0.5);
             cursor: grab;
         }
 
-        /* BIG AUDIO BUTTON */
         .big-audio-btn {
-            width: 60px; height: 60px; background: var(--gold);
+            width: 45px; height: 45px; background: var(--gold);
             border-radius: 50%; border: none; color: white;
-            font-size: 1.8rem; cursor: pointer; display: flex;
+            font-size: 1.3rem; cursor: pointer; display: flex;
             align-items: center; justify-content: center;
-            box-shadow: 0 4px 0 #8d7318;
-            pointer-events: auto; /* Ensures it's clickable */
+            box-shadow: 0 3px 0 #8d7318;
         }
 
         .name-slot {
-            height: 85px; background: var(--paper-dark);
-            border: 3px solid #334155; border-radius: 15px;
+            height: 65px; background: var(--paper-dark);
+            border: 2px solid #334155; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             color: var(--text-white); font-weight: 900;
-            font-family: 'Montserrat', sans-serif; font-size: 1.9rem;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            font-family: 'Montserrat', sans-serif; font-size: 1.4rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
             text-transform: uppercase;
+            padding: 0 10px;
+        }
+
+        /* MEDIA QUERY FOR SMALL SCREENS */
+        @media (max-width: 600px) {
+            .name-slot { font-size: 1.1rem; }
+            .flag-card { width: 70px; height: 55px; font-size: 2rem; }
+            .flag-unit { height: 65px; }
+            .name-slot { height: 55px; }
+            #game-board { grid-template-columns: 130px 1fr; }
         }
 
         .name-slot.correct { background: #1b4332 !important; border-color: #2d6a4f; }
@@ -88,16 +104,15 @@
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-12px); }
-            75% { transform: translateX(12px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
 
         .btn {
             background: var(--gold); color: white; border: none;
-            padding: 18px 45px; margin: 10px; border-radius: 10px;
-            font-size: 1.7rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 0 #8d7318;
-            font-family: 'Assistant';
+            padding: 15px 35px; margin: 10px; border-radius: 8px;
+            font-size: 1.4rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 #8d7318; font-family: 'Assistant';
         }
 
         #win-modal {
@@ -109,19 +124,24 @@
 <body>
 
     <div id="unlock-screen">
-        <h1 style="font-size: 3rem;">Matching Countries</h1>
-        <h2 style="font-family: 'Assistant';">התאמת מדינות</h2>
+        <h1 style="font-size: 2.5rem; margin: 0;">Matching Countries</h1>
+        <h2 style="font-family: 'Assistant'; margin: 10px 0;">התאמת מדינות</h2>
         <button class="btn" onclick="initSystem()">START / התחל</button>
     </div>
 
     <div id="main-menu" class="header" style="display:none;">
-        <h1>Matching Countries / התאמת מדינות</h1>
+        <h1 style="margin: 5px 0;">Matching Countries / התאמת מדינות</h1>
         <div id="lvl-btns"></div>
     </div>
 
+    <div id="instr" class="instructions" style="display:none;">
+        Drag the flag to the matching word.<br>
+        גררו את הדגל למילה המתאימה.
+    </div>
+
     <div id="game-stats">
-        <div id="timer-display">TIME: 00:00 / זמן</div>
-        <div id="score-display">MATCHES: 0/8 / התאמות</div>
+        <div id="timer-display">TIME: 00:00</div>
+        <div id="score-display">MATCHES: 0/8</div>
     </div>
 
     <div id="game-board">
@@ -130,7 +150,7 @@
     </div>
 
     <div id="win-modal">
-        <h1 style="font-size: 4rem; color: var(--gold);">EXCELLENT! / כל הכבוד!</h1>
+        <h1 style="font-size: 3rem; color: var(--gold); margin-bottom: 0;">EXCELLENT! / כל הכבוד!</h1>
         <h2 id="final-time"></h2>
         <button class="btn" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
     </div>
@@ -146,9 +166,7 @@
         let dragTarget = null, grabX, grabY, solved = 0, clock = 0, timerRef = null;
 
         function initSystem() {
-            // Unlocks audio engine on first tap
-            const msg = new SpeechSynthesisUtterance(' ');
-            window.speechSynthesis.speak(msg);
+            window.speechSynthesis.getVoices();
             document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('main-menu').style.display = 'block';
             renderLevels();
@@ -175,12 +193,13 @@
         function startLevel(lvl) {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('game-stats').style.display = 'flex';
+            document.getElementById('instr').style.display = 'block';
             document.getElementById('game-board').style.display = 'grid';
             timerRef = setInterval(() => {
                 clock++;
                 const m = Math.floor(clock / 60).toString().padStart(2, '0');
                 const s = (clock % 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `TIME: ${m}:${s} / זמן`;
+                document.getElementById('timer-display').innerText = `TIME: ${m}:${s}`;
             }, 1000);
 
             const items = database[lvl];
@@ -196,13 +215,11 @@
                     <button class="big-audio-btn">🔊</button>
                 `;
                 
-                // AUDIO BUTTON CLICK
                 unit.querySelector('.big-audio-btn').addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                     playVoice(d.n);
                 });
 
-                // DRAG START
                 unit.querySelector('.flag-card').addEventListener('pointerdown', (e) => {
                     pickup(e, unit);
                 });
@@ -224,6 +241,7 @@
             const r = dragTarget.getBoundingClientRect();
             grabX = e.clientX - r.left; grabY = e.clientY - r.top;
             dragTarget.style.position = 'fixed'; dragTarget.style.zIndex = '1000';
+            dragTarget.style.pointerEvents = 'none';
             
             document.onpointermove = (ev) => {
                 dragTarget.style.left = (ev.clientX - grabX) + 'px';
@@ -233,15 +251,18 @@
             document.onpointerup = (ev) => {
                 const slots = document.getElementsByClassName('name-slot');
                 let matched = false;
+                const dropX = ev.clientX;
+                const dropY = ev.clientY;
+
                 for(let slot of slots) {
                     const rect = slot.getBoundingClientRect();
-                    if(ev.clientX > rect.left && ev.clientX < rect.right && ev.clientY > rect.top && ev.clientY < rect.bottom) {
+                    if(dropX > rect.left && dropX < rect.right && dropY > rect.top && dropY < rect.bottom) {
                         if(slot.dataset.country === dragTarget.dataset.country && !slot.classList.contains('correct')) {
                             slot.classList.add('correct');
-                            slot.innerHTML = `<span style="font-size:3rem; margin-right:20px;">${dragTarget.querySelector('.flag-card').innerText}</span> ${slot.dataset.country}`;
+                            slot.innerHTML = `<span style="font-size:2rem; margin-right:15px;">${dragTarget.querySelector('.flag-card').innerText}</span> ${slot.dataset.country}`;
                             dragTarget.remove();
                             solved++;
-                            document.getElementById('score-display').innerText = `MATCHES: ${solved}/8 / התאמות`;
+                            document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
                             matched = true;
                             if(solved === 8) {
                                 clearInterval(timerRef);
@@ -260,6 +281,7 @@
                     dragTarget.style.transition = '0.3s';
                     dragTarget.style.position = 'relative';
                     dragTarget.style.left = '0'; dragTarget.style.top = '0';
+                    dragTarget.style.pointerEvents = 'auto';
                 }
                 dragTarget = null; document.onpointermove = null; document.onpointerup = null;
             };
