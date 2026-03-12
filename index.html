@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Matching Countries</title>
+    <title>Matching Countries Game</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
@@ -23,7 +23,6 @@
 
         body {
             font-family: 'Assistant', sans-serif;
-            /* Improved Visibility for World Map Background */
             background-color: #e5e0d8;
             background-image: 
                 linear-gradient(rgba(240, 235, 225, 0.85), rgba(240, 235, 225, 0.85)),
@@ -40,12 +39,6 @@
 
         .header-container { width: 100%; max-width: 800px; text-align: center; padding: 10px; }
         h1 { color: var(--navy); margin: 5px; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
-
-        .instruction-box {
-            background: rgba(255, 255, 255, 0.9); border: 2px dashed var(--gold);
-            color: var(--navy); padding: 10px; border-radius: 8px;
-            margin: 10px auto; width: 90%; font-weight: 800;
-        }
 
         .lvl-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
@@ -73,18 +66,16 @@
         }
 
         #game-board {
-            display: none; grid-template-columns: 1fr 1.8fr; gap: 10px;
-            width: 95%; max-width: 850px; height: 62vh;
+            display: none; grid-template-columns: 1fr 2.2fr; gap: 10px;
+            width: 95%; max-width: 900px; height: 62vh;
         }
 
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
-        
         .flag-unit { display: flex; align-items: center; gap: 10px; height: 11%; }
 
         .flag-card {
-            width: 70px; height: 45px;
-            background: white; border-radius: 5px; border: 2px solid #444;
-            display: flex; align-items: center; justify-content: center;
+            width: 70px; height: 45px; background: white; border-radius: 5px; 
+            border: 2px solid #444; display: flex; align-items: center; justify-content: center;
             font-size: 2rem; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             z-index: 10; touch-action: none;
         }
@@ -92,21 +83,21 @@
         .big-audio-btn {
             width: 44px; height: 44px; background: var(--gold); border-radius: 50%;
             border: none; color: white; font-size: 1.2rem; cursor: pointer;
-            box-shadow: 0 3px 0 #8a6509;
         }
 
         .name-slot {
             height: 11%; width: 100%; background: var(--paper); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 800; font-family: 'Assistant', sans-serif;
-            font-size: 1rem; text-transform: uppercase; text-align: center;
-            padding: 0 10px; transition: background 0.3s;
+            font-size: 1.1rem; text-transform: uppercase; text-align: center;
+            padding: 0 15px; transition: background 0.3s;
         }
 
         .name-slot.correct { 
             background: #27ae60 !important; 
-            font-size: 0.95rem; 
+            font-size: 1.1rem; 
             justify-content: space-between;
+            direction: rtl; /* For Hebrew-English flow */
         }
 
         .btn-main {
@@ -139,7 +130,6 @@
                 <button class="back-btn" onclick="location.reload()">חזור / BACK</button>
                 <h1 style="font-size: 1.1rem;">Matching Countries</h1>
             </div>
-            <div class="instruction-box">Drag the flag to the word / גררו את הדגל למילה</div>
         </div>
     </div>
 
@@ -215,7 +205,7 @@
                 const div = document.createElement('div');
                 div.className = 'name-slot';
                 div.dataset.n = item.n;
-                div.dataset.h = item.h;
+                div.dataset.h = item.h; // Store Hebrew name
                 div.innerText = item.n;
                 nameCol.appendChild(div);
             });
@@ -246,14 +236,14 @@
                     if (ev.clientX > sRect.left && ev.clientX < sRect.right && ev.clientY > sRect.top && ev.clientY < sRect.bottom) {
                         if (s.dataset.n === dragEl.dataset.n) {
                             s.classList.add('correct');
-                            // Shows Flag + English + Hebrew together
-                            s.innerHTML = `<span>${dragEl.innerText}</span> <span>${s.dataset.n}</span> <span style="font-weight:400">${s.dataset.h}</span>`;
+                            // UPDATED: Show Flag + Hebrew + English together
+                            s.innerHTML = `<span style="font-weight:400">${s.dataset.h}</span> <span>${s.dataset.n}</span> <span style="font-size:1.8rem;">${dragEl.innerText}</span>`;
                             dragEl.remove();
                             solved++;
                             document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
                             if (solved === 8) { 
                                 clearInterval(timerRef);
-                                // 3 Second delay before victory screen pops up
+                                // Win screen delay of 3 seconds
                                 setTimeout(() => {
                                     confetti(); 
                                     document.getElementById('win-modal').style.display = 'flex';
