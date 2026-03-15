@@ -109,12 +109,6 @@
             box-shadow: 0 4px 0 #8c6608; min-width: 140px; margin: 5px;
         }
 
-        .btn-secondary {
-            background: #7f8c8d; color: white; border: none;
-            padding: 10px 20px; border-radius: 10px; font-weight: bold;
-            box-shadow: 0 4px 0 #5d6d6e; margin: 5px;
-        }
-
         .best-score-label {
             font-size: 0.65rem; color: #f1c40f; margin-top: 4px; display: block; font-weight: 400;
         }
@@ -147,10 +141,10 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%; max-width:420px;">
-            <button class="btn-main" onclick="startLevel(1)">Level One <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Level Two <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Level Three <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Level Four <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(1)">Level One 🔊 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level Two 🔊 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level Three 🔊 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level Four 🔊 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
@@ -173,7 +167,7 @@
         <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW CHALLENGE BEST! / שיא אתגר חדש!</p>
         
         <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 15px;">
-            <button id="review-btn" class="btn-secondary" onclick="showReview()">REVIEW RESULTS / בדוק תוצאות</button>
+            <button id="review-btn" style="background:#7f8c8d; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:bold;" onclick="showReview()">REVIEW RESULTS / בדוק תוצאות</button>
             <button class="btn-main" onclick="location.reload()" style="padding: 15px 30px;">PLAY AGAIN / לשחק שוב</button>
         </div>
     </div>
@@ -187,22 +181,29 @@
         };
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
-        let audioInit = false;
+        let synth = window.speechSynthesis;
+        let audioEnabled = false;
 
+        // Wake up audio on any touch
         function initAudio() {
-            if (audioInit) return;
-            const msg = new SpeechSynthesisUtterance(" ");
-            window.speechSynthesis.speak(msg);
-            audioInit = true;
+            if (audioEnabled) return;
+            let utterance = new SpeechSynthesisUtterance("ready");
+            utterance.volume = 0; // Silent but wakes up the engine
+            synth.speak(utterance);
+            audioEnabled = true;
+            console.log("Audio Engine Woken Up");
         }
 
         function playSound(text) {
-            window.speechSynthesis.cancel();
+            initAudio(); // Double check it's awake
+            synth.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'en-US';
-            window.speechSynthesis.speak(msg);
+            msg.rate = 0.9;
+            synth.speak(msg);
         }
 
+        // Rest of the game logic (StartLevel, Pickup, etc.) remains exactly as requested
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
             for(let i=1; i<=4; i++) {
@@ -218,7 +219,7 @@
         }
 
         function startLevel(lvl) {
-            initAudio();
+            playSound(""); // Immediate silent wake up
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -253,6 +254,7 @@
 
         let dragEl = null, startX, startY;
         function pickup(e, el) {
+            initAudio(); 
             if (solved >= 8) return;
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
@@ -270,7 +272,6 @@
                     const r = s.getBoundingClientRect();
                     if (ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
                         const isCorrect = (s.dataset.n === dragEl.dataset.n);
-
                         if (isChallenge) {
                             if (!s.classList.contains('occupied')) {
                                 s.classList.add('occupied');
@@ -290,7 +291,6 @@
                         if (placed) break;
                     }
                 }
-
                 if (!placed) {
                     dragEl.style.transition = "transform 0.3s";
                     dragEl.style.transform = "translate(0,0)";
@@ -313,8 +313,6 @@
 
         function endGame() {
             clearInterval(timerRef);
-            const storageKey = 'best_challenge_' + currentLvl;
-            
             let en = "", he = "";
             if (correctCount === 8) { en = "AMAZING!"; he = "מדהים!"; }
             else if (correctCount >= 5) { en = "GREAT JOB!"; he = "כל הכבוד!"; }
@@ -322,16 +320,15 @@
 
             document.getElementById('feedback-en').innerText = en;
             document.getElementById('feedback-he').innerText = he;
-
+            
             if (isChallenge && correctCount === 8) {
+                const storageKey = 'best_challenge_' + currentLvl;
                 const previousBest = localStorage.getItem(storageKey);
                 if (!previousBest || clock < parseInt(previousBest)) {
                     localStorage.setItem(storageKey, clock);
                     document.getElementById('new-best-msg').style.display = 'block';
                 }
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            } else {
-                document.getElementById('new-best-msg').style.display = 'none';
             }
 
             document.getElementById('review-btn').style.display = (isChallenge && correctCount < 8) ? 'block' : 'none';
