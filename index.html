@@ -123,8 +123,8 @@
         <h2 style="font-weight: 400; margin-bottom: 5px;">משחק התאמת מדינות</h2>
 
         <div class="instruction-box">
-            <p><strong>EN:</strong> Drag the flag to the correct country. Learning Mode allows retries!</p>
-            <p style="text-align: right; direction: rtl;"><strong>HE:</strong> גרור את הדגל למדינה הנכונה. מצב למידה מאפשר ניסיונות חוזרים!</p>
+            <p><strong>EN:</strong> Drag the flag to the correct country.</p>
+            <p style="text-align: right; direction: rtl;"><strong>HE:</strong> גרור את הדגל למדינה הנכונה.</p>
         </div>
         
         <div class="mode-selector">
@@ -177,26 +177,34 @@
         };
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
-        let synth = window.speechSynthesis;
-        let audioEnabled = false;
+        
+        // --- IMPROVED AUDIO LOGIC ---
+        let audioWoken = false;
 
         function initAudio() {
-            if (audioEnabled) return;
-            let utterance = new SpeechSynthesisUtterance(" ");
-            utterance.volume = 0;
-            synth.speak(utterance);
-            audioEnabled = true;
+            if (audioWoken) return;
+            const msg = new SpeechSynthesisUtterance(" ");
+            msg.volume = 0;
+            window.speechSynthesis.speak(msg);
+            audioWoken = true;
         }
 
         function playSound(text) {
-            initAudio();
-            synth.cancel();
+            // Cancel anything current to prevent "clogging"
+            window.speechSynthesis.cancel();
+            
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'en-US';
-            msg.rate = 0.95;
-            synth.speak(msg);
+            msg.rate = 0.9;
+            
+            // Re-wake engine right before speaking
+            window.speechSynthesis.speak(msg);
         }
 
+        // Catch global clicks to keep engine alive
+        document.addEventListener('pointerdown', initAudio);
+
+        // --- GAMEPLAY FUNCTIONS ---
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
             for(let i=1; i<=4; i++) {
@@ -230,7 +238,7 @@
 
             [...database[lvl]].sort(() => Math.random() - 0.5).forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'flag-unit'; div.style.display='flex'; div.style.alignItems='center'; div.style.gap='8px'; div.style.height='11%';
+                div.className = 'flag-unit'; div.style.cssText = 'display:flex; align-items:center; gap:8px; height:11%;';
                 const audioClass = isChallenge ? 'challenge-hidden' : '';
                 div.innerHTML = `<div class="flag-card" onpointerdown="pickup(event, this)" data-n="${item.n}">${item.e}</div>
                                  <button class="big-audio-btn ${audioClass}" onpointerdown="playSound('${item.n}')">🔊</button>`;
@@ -246,7 +254,7 @@
 
         let dragEl = null, startX, startY;
         function pickup(e, el) {
-            initAudio(); 
+            initAudio(); // Force wake on grab
             if (solved >= 8) return;
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
@@ -292,7 +300,6 @@
         }
 
         function finalizeSlot(slot, flag) {
-            // Updated layout: Flag absolute left, Content centered
             slot.innerHTML = `<span style="position:absolute; left:10px; font-size:1.4rem;">${flag.innerText}</span>
                               <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
                                 <span style="font-size:1.2rem; font-weight:800; color:#f1c40f; line-height:1;">${slot.dataset.n}</span>
