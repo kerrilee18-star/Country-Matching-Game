@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Matching Countries Pro</title>
+    <title>Country Matching Game</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
@@ -129,8 +129,8 @@
 <body>
 
     <div id="unlock-screen" class="screen">
-        <h1 style="font-size: 2.2rem; margin:0;">World Match</h1>
-        <h2 style="font-weight: 400; margin-bottom: 5px;">התאמת מדינות</h2>
+        <h1 style="font-size: 2.2rem; margin:0;">Country Matching Game</h1>
+        <h2 style="font-weight: 400; margin-bottom: 5px;">משחק התאמת מדינות</h2>
 
         <div class="instruction-box">
             <p><strong>EN:</strong> Drag the flag to the correct country. Learning Mode allows retries!</p>
@@ -166,7 +166,8 @@
     </div>
 
     <div id="win-modal" class="screen" style="display:none;">
-        <h1 style="color: var(--gold); font-size: 2.5rem; margin:0;">RESULTS / תוצאות</h1>
+        <h1 style="color: var(--gold); font-size: 2.5rem; margin:0;">GREAT JOB!</h1>
+        <h2 style="margin-top:0; font-weight:400;">כל הכבוד!</h2>
         <p id="final-score" style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;"></p>
         <p id="final-time" style="font-size: 1.2rem;"></p>
         <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW CHALLENGE BEST! / שיא אתגר חדש!</p>
@@ -187,11 +188,16 @@
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
 
+        // Force browser to load the synthesis engine
+        window.speechSynthesis.getVoices();
+
         function playSound(text) {
             window.speechSynthesis.cancel();
             if(!text) return;
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'en-US';
+            msg.volume = 1;
+            msg.rate = 1;
             window.speechSynthesis.speak(msg);
         }
 
@@ -210,7 +216,9 @@
         }
 
         function startLevel(lvl) {
-            playSound(""); 
+            // CRITICAL: Dummy utterance to "unlock" speech on mobile/Chrome
+            playSound(" "); 
+            
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -245,7 +253,7 @@
 
         let dragEl = null, startX, startY;
         function pickup(e, el) {
-            if (solved >= 8) return; // Prevent interaction during end sequence
+            if (solved >= 8) return; 
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
             
@@ -312,7 +320,7 @@
                     document.getElementById('new-best-msg').style.display = 'block';
                 }
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                document.getElementById('review-btn').style.display = 'none'; // Hide review if perfect
+                document.getElementById('review-btn').style.display = 'none'; 
             } else {
                 document.getElementById('new-best-msg').style.display = 'none';
                 document.getElementById('review-btn').style.display = isChallenge ? 'block' : 'none';
@@ -331,7 +339,6 @@
             document.getElementById('win-modal').style.display = 'none';
             document.getElementById('game-board').style.display = 'grid';
             document.getElementById('game-stats').style.display = 'flex';
-            // Disable exit button during review to keep UI clean, or just let it reload
             document.getElementById('exit-btn').innerText = "DONE / סיים";
         }
 
