@@ -86,10 +86,10 @@
 
         .name-slot {
             height: 11%; width: 100%; background: var(--paper); border-radius: 10px;
-            display: flex; align-items: center; justify-content: space-between;
+            display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 800; padding: 0 12px;
             font-size: clamp(0.7rem, 2.8vw, 1.1rem); transition: all 0.3s;
-            border: 2px solid transparent;
+            border: 2px solid transparent; text-align: center; position: relative;
         }
 
         .name-slot.correct { background: var(--green) !important; border-color: #fff; }
@@ -107,10 +107,6 @@
             background: var(--gold); color: white; border: none;
             padding: 10px; border-radius: 10px; font-weight: bold;
             box-shadow: 0 4px 0 #8c6608; min-width: 140px; margin: 5px;
-        }
-
-        .best-score-label {
-            font-size: 0.65rem; color: #f1c40f; margin-top: 4px; display: block; font-weight: 400;
         }
 
         #game-stats {
@@ -141,10 +137,10 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%; max-width:420px;">
-            <button class="btn-main" onclick="startLevel(1)">Level One 🔊 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Level Two 🔊 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Level Three 🔊 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Level Four 🔊 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(1)">Level One <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level Two <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level Three <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level Four <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
@@ -184,26 +180,23 @@
         let synth = window.speechSynthesis;
         let audioEnabled = false;
 
-        // Wake up audio on any touch
         function initAudio() {
             if (audioEnabled) return;
-            let utterance = new SpeechSynthesisUtterance("ready");
-            utterance.volume = 0; // Silent but wakes up the engine
+            let utterance = new SpeechSynthesisUtterance(" ");
+            utterance.volume = 0;
             synth.speak(utterance);
             audioEnabled = true;
-            console.log("Audio Engine Woken Up");
         }
 
         function playSound(text) {
-            initAudio(); // Double check it's awake
+            initAudio();
             synth.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'en-US';
-            msg.rate = 0.9;
+            msg.rate = 0.95;
             synth.speak(msg);
         }
 
-        // Rest of the game logic (StartLevel, Pickup, etc.) remains exactly as requested
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
             for(let i=1; i<=4; i++) {
@@ -219,7 +212,6 @@
         }
 
         function startLevel(lvl) {
-            playSound(""); // Immediate silent wake up
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -300,8 +292,9 @@
         }
 
         function finalizeSlot(slot, flag) {
-            slot.innerHTML = `<span style="font-size:1.4rem;">${flag.innerText}</span>
-                              <div style="display:flex; flex-direction:column; align-items:flex-end;">
+            // Updated layout: Flag absolute left, Content centered
+            slot.innerHTML = `<span style="position:absolute; left:10px; font-size:1.4rem;">${flag.innerText}</span>
+                              <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
                                 <span style="font-size:1.2rem; font-weight:800; color:#f1c40f; line-height:1;">${slot.dataset.n}</span>
                                 <span style="font-size:0.8rem; opacity:0.8; font-weight:400; line-height:1.2;">${slot.dataset.h}</span>
                               </div>`;
