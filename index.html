@@ -116,7 +116,7 @@
         }
     </style>
 </head>
-<body onpointerdown="initAudio()">
+<body>
 
     <div id="unlock-screen" class="screen">
         <h1 style="font-size: 2.2rem; margin:0;">Country Matching Game</h1>
@@ -178,33 +178,23 @@
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
         
-        // --- IMPROVED AUDIO LOGIC ---
-        let audioWoken = false;
-
-        function initAudio() {
-            if (audioWoken) return;
-            const msg = new SpeechSynthesisUtterance(" ");
-            msg.volume = 0;
-            window.speechSynthesis.speak(msg);
-            audioWoken = true;
-        }
-
+        // --- AUDIO ENGINE ---
         function playSound(text) {
-            // Cancel anything current to prevent "clogging"
+            // Check if SpeechSynthesis is available
+            if (!('speechSynthesis' in window)) return;
+            
+            // Cancel current speaking
             window.speechSynthesis.cancel();
             
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US';
-            msg.rate = 0.9;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1.0;
+            utterance.volume = 1.0;
             
-            // Re-wake engine right before speaking
-            window.speechSynthesis.speak(msg);
+            window.speechSynthesis.speak(utterance);
         }
 
-        // Catch global clicks to keep engine alive
-        document.addEventListener('pointerdown', initAudio);
-
-        // --- GAMEPLAY FUNCTIONS ---
+        // --- GAMEPLAY ---
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
             for(let i=1; i<=4; i++) {
@@ -220,6 +210,9 @@
         }
 
         function startLevel(lvl) {
+            // "Jumpstart" audio engine on level start via user click
+            playSound(""); 
+
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -240,8 +233,12 @@
                 const div = document.createElement('div');
                 div.className = 'flag-unit'; div.style.cssText = 'display:flex; align-items:center; gap:8px; height:11%;';
                 const audioClass = isChallenge ? 'challenge-hidden' : '';
-                div.innerHTML = `<div class="flag-card" onpointerdown="pickup(event, this)" data-n="${item.n}">${item.e}</div>
-                                 <button class="big-audio-btn ${audioClass}" onpointerdown="playSound('${item.n}')">🔊</button>`;
+                
+                // Directly attaching playSound to the button's onpointerdown
+                div.innerHTML = `
+                    <div class="flag-card" onpointerdown="pickup(event, this)" data-n="${item.n}">${item.e}</div>
+                    <button class="big-audio-btn ${audioClass}" onpointerdown="playSound('${item.n}')">🔊</button>
+                `;
                 flagCol.appendChild(div);
             });
 
@@ -254,7 +251,6 @@
 
         let dragEl = null, startX, startY;
         function pickup(e, el) {
-            initAudio(); // Force wake on grab
             if (solved >= 8) return;
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
