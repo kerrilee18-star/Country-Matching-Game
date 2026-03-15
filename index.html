@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Matching Countries Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Matching Countries Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Assistant:wght@600;800&display=swap');
@@ -12,130 +12,131 @@
             --navy: #2c3e50;
             --gold: #b8860b;
             --paper: #0d1b2a;
+            --green: #27ae60;
+            --orange: #e67e22;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+            touch-action: none; 
+        }
         
         html, body { 
             width: 100%; height: 100%; overflow: hidden; 
-            margin: 0; padding: 0; touch-action: none;
+            margin: 0; padding: 0; position: fixed;
         }
 
         body {
             font-family: 'Assistant', sans-serif;
-            background-color: #e5e0d8;
-            background-image: 
-                linear-gradient(rgba(240, 235, 225, 0.85), rgba(240, 235, 225, 0.85)),
-                url('https://www.transparenttextures.com/patterns/world-map.png');
-            background-size: cover;
+            background: #e5e0d8 url('https://www.transparenttextures.com/patterns/world-map.png');
             display: flex; flex-direction: column; align-items: center;
         }
 
-        #unlock-screen, #win-modal {
-            position: fixed; inset: 0; background: var(--navy); z-index: 9999;
+        .screen {
+            position: fixed; inset: 0; background: var(--navy); z-index: 1000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center;
+            color: white; text-align: center; padding: 20px;
         }
 
-        .header-container { width: 100%; max-width: 800px; text-align: center; padding: 10px; }
-        h1 { color: var(--navy); margin: 5px; font-size: 1.4rem; border-bottom: 3px solid var(--gold); display: inline-block; }
+        .lang-sub { display: block; font-size: 0.8rem; font-weight: 400; opacity: 0.9; }
 
-        .lvl-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-            width: 90%; max-width: 500px; margin: 20px auto;
+        .mode-selector {
+            margin: 15px 0; background: rgba(255,255,255,0.1); padding: 15px;
+            border-radius: 15px; display: flex; align-items: center; gap: 15px;
+            border: 1px solid var(--gold);
         }
 
-        .lvl-btn {
-            background: var(--navy); color: white; border: none;
-            padding: 20px 10px; border-radius: 12px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 0 #151f29;
-            display: flex; flex-direction: column; align-items: center;
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
         }
-        .lvl-btn span { font-size: 0.85rem; opacity: 0.8; margin-top: 5px; }
-
-        .nav-bar { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
-        .back-btn {
-            background: #e67e22; color: white; border: none; padding: 8px 15px;
-            border-radius: 8px; font-weight: bold; cursor: pointer;
+        .slider:before {
+            position: absolute; content: ""; height: 26px; width: 26px;
+            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
         }
-
-        #game-stats {
-            display: none; width: 90%; max-width: 600px; justify-content: space-around;
-            background: var(--navy); padding: 10px; border-radius: 30px;
-            color: white; font-weight: bold; margin-bottom: 10px;
-        }
+        input:checked + .slider { background-color: var(--orange); }
+        input:checked + .slider:before { transform: translateX(26px); }
 
         #game-board {
-            display: none; grid-template-columns: 1fr 2.2fr; gap: 10px;
-            width: 95%; max-width: 900px; height: 62vh;
+            display: none; grid-template-columns: 1fr 2.5fr; gap: 10px;
+            width: 95%; max-width: 800px; height: 75vh; margin-top: 10px;
         }
 
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
-        .flag-unit { display: flex; align-items: center; gap: 10px; height: 11%; }
 
         .flag-card {
-            width: 70px; height: 45px; background: white; border-radius: 5px; 
-            border: 2px solid #444; display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 10; touch-action: none;
-        }
-
-        .big-audio-btn {
-            width: 44px; height: 44px; background: var(--gold); border-radius: 50%;
-            border: none; color: white; font-size: 1.2rem; cursor: pointer;
+            width: clamp(50px, 15vw, 80px); height: clamp(35px, 10vw, 55px);
+            background: white; border-radius: 8px; border: 2px solid #444;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(1.5rem, 5vw, 2.5rem); cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); z-index: 10;
         }
 
         .name-slot {
-            height: 11%; width: 100%; background: var(--paper); border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 800; font-family: 'Assistant', sans-serif;
-            font-size: 1.1rem; text-transform: uppercase; text-align: center;
-            padding: 0 15px; transition: background 0.3s;
+            height: 11%; width: 100%; background: var(--paper); border-radius: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            color: white; font-weight: 800; padding: 0 15px;
+            font-size: clamp(0.75rem, 2.8vw, 1.1rem); transition: all 0.3s;
         }
 
-        .name-slot.correct { 
-            background: #27ae60 !important; 
-            font-size: 1.1rem; 
-            justify-content: space-between;
-            direction: rtl; /* For Hebrew-English flow */
+        .name-slot.correct { background: var(--green) !important; border: 2px solid #fff; }
+
+        .big-audio-btn {
+            width: 42px; height: 42px; background: var(--gold); border-radius: 50%;
+            border: none; color: white; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; box-shadow: 0 3px 0 #8c6608;
         }
+
+        .challenge-hidden { visibility: hidden; pointer-events: none; }
 
         .btn-main {
             background: var(--gold); color: white; border: none;
-            padding: 15px 40px; border-radius: 10px; font-size: 1.5rem; font-weight: bold;
+            padding: 10px; border-radius: 10px; font-weight: bold;
+            box-shadow: 0 4px 0 #8c6608; min-width: 130px;
+        }
+
+        .best-score-label {
+            font-size: 0.7rem; color: #f1c40f; margin-top: 4px; display: block;
+        }
+
+        #game-stats {
+            display:none; width: 100%; background: var(--navy); color: white; 
+            padding: 10px; border-radius: 0 0 20px 20px; justify-content: space-around; 
+            font-weight: bold; align-items: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="unlock-screen">
-        <h1 style="color:white; border:none; font-size: 2.5rem;">Matching Countries</h1>
-        <h2 style="font-family: 'Assistant';">התאמת מדינות</h2>
-        <button class="btn-main" onclick="startApp()">START / התחל</button>
-    </div>
-
-    <div class="header-container" id="game-header" style="display:none;">
-        <div id="menu-view">
-            <h1>Matching Countries / התאמת מדינות</h1>
-            <div class="lvl-grid">
-                <button class="lvl-btn" onclick="startLevel(1)">Level One <span>שלב ראשון</span></button>
-                <button class="lvl-btn" onclick="startLevel(2)">Level Two <span>שלב שני</span></button>
-                <button class="lvl-btn" onclick="startLevel(3)">Level Three <span>שלב שלישי</span></button>
-                <button class="lvl-btn" onclick="startLevel(4)">Level Four <span>שלב רביעי</span></button>
-            </div>
+    <div id="unlock-screen" class="screen">
+        <h1 style="font-size: 2.5rem; margin:0;">World Match</h1>
+        <h2 style="font-weight: 400; margin-bottom: 10px;">התאמת מדינות</h2>
+        
+        <div class="mode-selector">
+            <div style="text-align: right;">Learning<br><small>למידה</small></div>
+            <label class="switch">
+                <input type="checkbox" id="challenge-toggle" onchange="updateBestScoresDisplay()">
+                <span class="slider"></span>
+            </label>
+            <div style="text-align: left;">Challenge<br><small>אתגר</small></div>
         </div>
 
-        <div id="game-nav" style="display:none;">
-            <div class="nav-bar">
-                <button class="back-btn" onclick="location.reload()">חזור / BACK</button>
-                <h1 style="font-size: 1.1rem;">Matching Countries</h1>
-            </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%; max-width:400px;">
+            <button class="btn-main" onclick="startLevel(1)">Lvl 1 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Lvl 2 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Lvl 3 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Lvl 4 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
     <div id="game-stats">
+        <button style="background:var(--orange); border:none; color:white; padding:5px 10px; border-radius:5px;" onclick="location.reload()">EXIT / יציאה</button>
         <div id="timer-display">TIME: 00:00</div>
-        <div id="score-display">MATCHES: 0/8</div>
+        <div id="score-display">0/8</div>
     </div>
 
     <div id="game-board">
@@ -143,10 +144,12 @@
         <div class="col" id="name-col"></div>
     </div>
 
-    <div id="win-modal" style="display:none;">
-        <h1 style="font-size: 3rem; color: var(--gold);">EXCELLENT!</h1>
-        <h2 style="font-size: 2rem;">כל הכבוד</h2>
-        <button class="btn-main" onclick="location.reload()">PLAY AGAIN / שחק שוב</button>
+    <div id="win-modal" class="screen" style="display:none;">
+        <h1 style="color: var(--gold); font-size: 3rem; margin:0;">EXCELLENT!</h1>
+        <h2 style="margin-top:0;">כל הכבוד</h2>
+        <p id="final-time"></p>
+        <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW BEST! / שיא חדש!</p>
+        <button class="btn-main" onclick="location.reload()" style="padding: 20px 40px;">PLAY AGAIN / לשחק שוב</button>
     </div>
 
     <script>
@@ -157,110 +160,111 @@
             4: [{e:"🇪🇬", n:"Egypt", h:"מצרים"}, {e:"🇬🇷", n:"Greece", h:"יוון"}, {e:"🇨🇾", n:"Cyprus", h:"קפריסין"}, {e:"🇫🇷", n:"France", h:"צרפת"}, {e:"🇮🇳", n:"India", h:"הודו"}, {e:"🇨🇭", n:"Switzerland", h:"שוויץ"}, {e:"🇳🇱", n:"Netherlands", h:"הולנד"}, {e:"🇱🇹", n:"Lithuania", h:"ליטא"}]
         };
 
-        let solved = 0, clock = 0, timerRef = null;
+        let currentLvl = 1, solved = 0, clock = 0, timerRef = null, isChallenge = false;
 
-        function startApp() {
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance("");
-            window.speechSynthesis.speak(utter);
-            document.getElementById('unlock-screen').style.display = 'none';
-            document.getElementById('game-header').style.display = 'block';
+        function updateBestScoresDisplay() {
+            const challenge = document.getElementById('challenge-toggle').checked;
+            const prefix = challenge ? 'best_challenge_' : 'best_learn_';
+            for(let i=1; i<=4; i++) {
+                const best = localStorage.getItem(prefix + i);
+                document.getElementById('best-'+i).innerText = best ? `Best: ${formatTime(best)}` : '';
+            }
         }
 
-        function playSound(text) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US';
-            msg.rate = 0.85;
-            window.speechSynthesis.speak(msg);
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
         }
 
         function startLevel(lvl) {
-            document.getElementById('menu-view').style.display = 'none';
-            document.getElementById('game-nav').style.display = 'block';
+            currentLvl = lvl;
+            isChallenge = document.getElementById('challenge-toggle').checked;
+            document.getElementById('unlock-screen').style.display = 'none';
             document.getElementById('game-stats').style.display = 'flex';
             document.getElementById('game-board').style.display = 'grid';
 
             const flagCol = document.getElementById('flag-col');
             const nameCol = document.getElementById('name-col');
             flagCol.innerHTML = ''; nameCol.innerHTML = '';
-            solved = 0; clock = 0;
-
+            
             timerRef = setInterval(() => {
                 clock++;
-                const m = Math.floor(clock / 60).toString().padStart(2, '0');
-                const s = (clock % 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `TIME: ${m}:${s}`;
+                document.getElementById('timer-display').innerText = `TIME: ${formatTime(clock)}`;
             }, 1000);
 
             [...database[lvl]].sort(() => Math.random() - 0.5).forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'flag-unit';
+                div.className = 'flag-unit'; div.style.display='flex'; div.style.alignItems='center'; div.style.gap='8px'; div.style.height='11%';
+                const audioClass = isChallenge ? 'challenge-hidden' : '';
                 div.innerHTML = `<div class="flag-card" onpointerdown="pickup(event, this)" data-n="${item.n}">${item.e}</div>
-                                 <button class="big-audio-btn" onpointerdown="playSound('${item.n}')">🔊</button>`;
+                                 <button class="big-audio-btn ${audioClass}" onpointerdown="playSound('${item.n}')">🔊</button>`;
                 flagCol.appendChild(div);
             });
 
             [...database[lvl]].sort(() => Math.random() - 0.5).forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'name-slot';
-                div.dataset.n = item.n;
-                div.dataset.h = item.h; // Store Hebrew name
-                div.innerText = item.n;
+                div.className = 'name-slot'; div.dataset.n = item.n; div.dataset.h = item.h; div.innerText = item.n;
                 nameCol.appendChild(div);
             });
         }
 
+        function playSound(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US';
+            window.speechSynthesis.speak(msg);
+        }
+
         let dragEl = null, startX, startY;
-
         function pickup(e, el) {
-            dragEl = el;
-            startX = e.clientX; startY = e.clientY;
-            dragEl.style.zIndex = "1000";
-            dragEl.style.transition = "none";
-
-            document.onpointermove = (ev) => {
-                if(!dragEl) return;
-                const dx = ev.clientX - startX;
-                const dy = ev.clientY - startY;
-                dragEl.style.transform = `translate(${dx}px, ${dy}px)`;
-            };
-
+            dragEl = el; startX = e.clientX; startY = e.clientY;
+            dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
+            document.onpointermove = (ev) => { if(dragEl) dragEl.style.transform = `translate(${ev.clientX - startX}px, ${ev.clientY - startY}px)`; };
             document.onpointerup = (ev) => {
                 if(!dragEl) return;
                 const slots = document.getElementsByClassName('name-slot');
                 let found = false;
-                
                 for (let s of slots) {
-                    const sRect = s.getBoundingClientRect();
-                    if (ev.clientX > sRect.left && ev.clientX < sRect.right && ev.clientY > sRect.top && ev.clientY < sRect.bottom) {
-                        if (s.dataset.n === dragEl.dataset.n) {
+                    const r = s.getBoundingClientRect();
+                    if (ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
+                        if (s.dataset.n === dragEl.dataset.n && !s.classList.contains('correct')) {
                             s.classList.add('correct');
-                            // UPDATED: Show Flag + Hebrew + English together
-                            s.innerHTML = `<span style="font-weight:400">${s.dataset.h}</span> <span>${s.dataset.n}</span> <span style="font-size:1.8rem;">${dragEl.innerText}</span>`;
-                            dragEl.remove();
-                            solved++;
-                            document.getElementById('score-display').innerText = `MATCHES: ${solved}/8`;
-                            if (solved === 8) { 
-                                clearInterval(timerRef);
-                                // Win screen delay of 3 seconds
-                                setTimeout(() => {
-                                    confetti(); 
-                                    document.getElementById('win-modal').style.display = 'flex';
-                                }, 3000);
-                            }
+                            s.innerHTML = `<span style="font-size:1.4rem;">${dragEl.innerText}</span><span style="font-weight:400;opacity:0.8;">${s.dataset.h}</span><span>${s.dataset.n}</span>`;
+                            dragEl.remove(); solved++;
+                            document.getElementById('score-display').innerText = `${solved}/8`;
+                            if (solved === 8) endGame();
                             found = true; break;
                         }
                     }
                 }
-                
-                if (!found) {
-                    dragEl.style.transform = "translate(0,0)";
-                    dragEl.style.zIndex = "10";
-                }
+                if (!found) { dragEl.style.transition = "transform 0.3s"; dragEl.style.transform = "translate(0,0)"; }
                 dragEl = null; document.onpointermove = null; document.onpointerup = null;
             };
         }
+
+        function endGame() {
+            clearInterval(timerRef);
+            const prefix = isChallenge ? 'best_challenge_' : 'best_learn_';
+            const storageKey = prefix + currentLvl;
+            const previousBest = localStorage.getItem(storageKey);
+            
+            if (!previousBest || clock < parseInt(previousBest)) {
+                localStorage.setItem(storageKey, clock);
+                document.getElementById('new-best-msg').style.display = 'block';
+            }
+
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            setTimeout(() => {
+                document.getElementById('game-board').style.display = 'none';
+                document.getElementById('game-stats').style.display = 'none';
+                document.getElementById('final-time').innerText = `Time: ${formatTime(clock)}`;
+                document.getElementById('win-modal').style.display = 'flex';
+            }, 800);
+        }
+
+        // Initialize display
+        updateBestScoresDisplay();
     </script>
 </body>
 </html>
