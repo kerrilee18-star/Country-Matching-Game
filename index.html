@@ -41,8 +41,6 @@
             color: white; text-align: center; padding: 20px;
         }
 
-        .lang-sub { display: block; font-size: 0.8rem; font-weight: 400; opacity: 0.9; }
-
         .instruction-box {
             background: rgba(255,255,255,0.1);
             padding: 15px; border-radius: 12px; margin: 15px 0;
@@ -126,7 +124,7 @@
         }
     </style>
 </head>
-<body>
+<body onpointerdown="initAudio()">
 
     <div id="unlock-screen" class="screen">
         <h1 style="font-size: 2.2rem; margin:0;">Country Matching Game</h1>
@@ -147,10 +145,10 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%; max-width:420px;">
-            <button class="btn-main" onclick="startLevel(1)">Level One <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Level Two <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Level Three <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Level Four <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(1)">Level One <span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level Two <span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level Three <span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level Four <span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
@@ -166,8 +164,8 @@
     </div>
 
     <div id="win-modal" class="screen" style="display:none;">
-        <h1 style="color: var(--gold); font-size: 2.5rem; margin:0;">GREAT JOB!</h1>
-        <h2 style="margin-top:0; font-weight:400;">כל הכבוד!</h2>
+        <h1 id="feedback-en" style="color: var(--gold); font-size: 2.5rem; margin:0;"></h1>
+        <h2 id="feedback-he" style="margin-top:0; font-weight:400;"></h2>
         <p id="final-score" style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;"></p>
         <p id="final-time" style="font-size: 1.2rem;"></p>
         <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW CHALLENGE BEST! / שיא אתגר חדש!</p>
@@ -187,17 +185,19 @@
         };
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
+        let audioInit = false;
 
-        // Force browser to load the synthesis engine
-        window.speechSynthesis.getVoices();
+        function initAudio() {
+            if (audioInit) return;
+            const msg = new SpeechSynthesisUtterance(" ");
+            window.speechSynthesis.speak(msg);
+            audioInit = true;
+        }
 
         function playSound(text) {
             window.speechSynthesis.cancel();
-            if(!text) return;
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'en-US';
-            msg.volume = 1;
-            msg.rate = 1;
             window.speechSynthesis.speak(msg);
         }
 
@@ -205,7 +205,7 @@
             const challenge = document.getElementById('challenge-toggle').checked;
             for(let i=1; i<=4; i++) {
                 const best = localStorage.getItem('best_challenge_' + i);
-                document.getElementById('best-'+i).innerText = (challenge && best) ? `Challenge Best: ${formatTime(best)}` : '';
+                document.getElementById('best-'+i).innerText = (challenge && best) ? `Best: ${formatTime(best)}` : '';
             }
         }
 
@@ -216,9 +216,7 @@
         }
 
         function startLevel(lvl) {
-            // CRITICAL: Dummy utterance to "unlock" speech on mobile/Chrome
-            playSound(" "); 
-            
+            initAudio();
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -253,7 +251,7 @@
 
         let dragEl = null, startX, startY;
         function pickup(e, el) {
-            if (solved >= 8) return; 
+            if (solved >= 8) return;
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
             
@@ -300,9 +298,12 @@
         }
 
         function finalizeSlot(slot, flag) {
+            // Updated: English Name (N) is now bold/gold, Hebrew (H) is smaller/secondary
             slot.innerHTML = `<span style="font-size:1.4rem;">${flag.innerText}</span>
-                              <span style="font-weight:400;opacity:0.8;">${slot.dataset.h}</span>
-                              <span>${slot.dataset.n}</span>`;
+                              <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                                <span style="font-size:1.2rem; font-weight:800; color:#f1c40f; line-height:1;">${slot.dataset.n}</span>
+                                <span style="font-size:0.8rem; opacity:0.8; font-weight:400; line-height:1.2;">${slot.dataset.h}</span>
+                              </div>`;
             flag.remove();
             solved++;
             document.getElementById('score-display').innerText = `${solved}/8`;
@@ -313,6 +314,15 @@
             clearInterval(timerRef);
             const storageKey = 'best_challenge_' + currentLvl;
             
+            // Tiered feedback logic
+            let en = "", he = "";
+            if (correctCount === 8) { en = "AMAZING!"; he = "מדהים!"; }
+            else if (correctCount >= 5) { en = "GREAT JOB!"; he = "כל הכבוד!"; }
+            else { en = "KEEP TRYING!"; he = "תמשיכו לנסות!"; }
+
+            document.getElementById('feedback-en').innerText = en;
+            document.getElementById('feedback-he').innerText = he;
+
             if (isChallenge && correctCount === 8) {
                 const previousBest = localStorage.getItem(storageKey);
                 if (!previousBest || clock < parseInt(previousBest)) {
@@ -320,11 +330,11 @@
                     document.getElementById('new-best-msg').style.display = 'block';
                 }
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                document.getElementById('review-btn').style.display = 'none'; 
             } else {
                 document.getElementById('new-best-msg').style.display = 'none';
-                document.getElementById('review-btn').style.display = isChallenge ? 'block' : 'none';
             }
+
+            document.getElementById('review-btn').style.display = (isChallenge && correctCount < 8) ? 'block' : 'none';
 
             setTimeout(() => {
                 document.getElementById('game-board').style.display = 'none';
