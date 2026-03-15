@@ -64,7 +64,7 @@
 
         #game-board {
             display: none; grid-template-columns: 1fr 2.5fr; gap: 10px;
-            width: 95%; max-width: 800px; height: 75vh; margin-top: 10px;
+            width: 95%; max-width: 800px; height: 72vh; margin-top: 10px;
         }
 
         .col { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
@@ -80,12 +80,13 @@
         .name-slot {
             height: 11%; width: 100%; background: var(--paper); border-radius: 10px;
             display: flex; align-items: center; justify-content: space-between;
-            color: white; font-weight: 800; padding: 0 15px;
-            font-size: clamp(0.75rem, 2.8vw, 1.1rem); transition: all 0.3s;
+            color: white; font-weight: 800; padding: 0 12px;
+            font-size: clamp(0.7rem, 2.8vw, 1.1rem); transition: all 0.3s;
+            border: 2px solid transparent;
         }
 
-        .name-slot.correct { background: var(--green) !important; border: 2px solid #fff; }
-        .name-slot.wrong { background: var(--red) !important; border: 2px solid #fff; }
+        .name-slot.correct { background: var(--green) !important; border-color: #fff; }
+        .name-slot.wrong { background: var(--red) !important; border-color: #fff; }
 
         .big-audio-btn {
             width: 42px; height: 42px; background: var(--gold); border-radius: 50%;
@@ -98,16 +99,16 @@
         .btn-main {
             background: var(--gold); color: white; border: none;
             padding: 10px; border-radius: 10px; font-weight: bold;
-            box-shadow: 0 4px 0 #8c6608; min-width: 140px;
+            box-shadow: 0 4px 0 #8c6608; min-width: 140px; margin: 5px;
         }
 
         .best-score-label {
-            font-size: 0.7rem; color: #f1c40f; margin-top: 4px; display: block;
+            font-size: 0.65rem; color: #f1c40f; margin-top: 4px; display: block; font-weight: 400;
         }
 
         #game-stats {
             display:none; width: 100%; background: var(--navy); color: white; 
-            padding: 10px; border-radius: 0 0 20px 20px; justify-content: space-around; 
+            padding: 8px; border-radius: 0 0 20px 20px; justify-content: space-around; 
             font-weight: bold; align-items: center;
         }
     </style>
@@ -127,17 +128,17 @@
             <div style="text-align: left;">Challenge<br><small>אתגר</small></div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%; max-width:400px;">
-            <button class="btn-main" onclick="startLevel(1)">Level 1 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Level 2 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Level 3 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Level 4 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%; max-width:420px;">
+            <button class="btn-main" onclick="startLevel(1)">Level One <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level Two <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level Three <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level Four <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
     <div id="game-stats">
         <button style="background:var(--orange); border:none; color:white; padding:5px 10px; border-radius:5px;" onclick="location.reload()">EXIT / יציאה</button>
-        <div id="timer-display">TIME: 00:00</div>
+        <div id="timer-display">00:00</div>
         <div id="score-display">0/8</div>
     </div>
 
@@ -147,12 +148,11 @@
     </div>
 
     <div id="win-modal" class="screen" style="display:none;">
-        <h1 id="win-title" style="color: var(--gold); font-size: 3rem; margin:0;">FINISH!</h1>
-        <h2 id="win-title-he" style="margin-top:0;">סיימת את המשחק</h2>
-        <p id="final-score" style="font-size: 1.5rem; font-weight: bold;"></p>
-        <p id="final-time"></p>
+        <h1 id="win-title" style="color: var(--gold); font-size: 2.5rem; margin:0;">RESULTS / תוצאות</h1>
+        <p id="final-score" style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;"></p>
+        <p id="final-time" style="font-size: 1.2rem;"></p>
         <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW BEST TIME! / שיא זמן חדש!</p>
-        <button class="btn-main" onclick="location.reload()" style="padding: 20px 40px;">PLAY AGAIN / לשחק שוב</button>
+        <button class="btn-main" onclick="location.reload()" style="padding: 15px 30px; margin-top: 20px;">PLAY AGAIN / לשחק שוב</button>
     </div>
 
     <script>
@@ -164,6 +164,15 @@
         };
 
         let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
+
+        // Unlock Audio Context
+        function playSound(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US';
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
+        }
 
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
@@ -181,6 +190,9 @@
         }
 
         function startLevel(lvl) {
+            // Wake up audio on click
+            playSound(""); 
+
             currentLvl = lvl;
             isChallenge = document.getElementById('challenge-toggle').checked;
             document.getElementById('unlock-screen').style.display = 'none';
@@ -194,7 +206,7 @@
             
             timerRef = setInterval(() => {
                 clock++;
-                document.getElementById('timer-display').innerText = `TIME: ${formatTime(clock)}`;
+                document.getElementById('timer-display').innerText = formatTime(clock);
             }, 1000);
 
             [...database[lvl]].sort(() => Math.random() - 0.5).forEach(item => {
@@ -213,18 +225,15 @@
             });
         }
 
-        function playSound(text) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'en-US';
-            window.speechSynthesis.speak(msg);
-        }
-
         let dragEl = null, startX, startY;
         function pickup(e, el) {
             dragEl = el; startX = e.clientX; startY = e.clientY;
             dragEl.style.zIndex = "2000"; dragEl.style.transition = "none";
-            document.onpointermove = (ev) => { if(dragEl) dragEl.style.transform = `translate(${ev.clientX - startX}px, ${ev.clientY - startY}px)`; };
+            
+            document.onpointermove = (ev) => { 
+                if(dragEl) dragEl.style.transform = `translate(${ev.clientX - startX}px, ${ev.clientY - startY}px)`; 
+            };
+
             document.onpointerup = (ev) => {
                 if(!dragEl) return;
                 const slots = document.getElementsByClassName('name-slot');
@@ -234,7 +243,7 @@
                     if (ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
                         if (!s.classList.contains('occupied')) {
                             s.classList.add('occupied');
-                            const isCorrect = s.dataset.n === dragEl.dataset.n;
+                            const isCorrect = (s.dataset.n === dragEl.dataset.n);
                             
                             if (isCorrect) {
                                 s.classList.add('correct');
@@ -243,7 +252,9 @@
                                 s.classList.add('wrong');
                             }
 
-                            s.innerHTML = `<span style="font-size:1.4rem;">${dragEl.innerText}</span><span style="font-weight:400;opacity:0.8;">${s.dataset.h}</span><span>${s.dataset.n}</span>`;
+                            s.innerHTML = `<span style="font-size:1.4rem;">${dragEl.innerText}</span>
+                                           <span style="font-weight:400;opacity:0.8;">${s.dataset.h}</span>
+                                           <span>${s.dataset.n}</span>`;
                             dragEl.remove();
                             solved++;
                             document.getElementById('score-display').innerText = `${solved}/8`;
@@ -263,22 +274,20 @@
             const storageKey = prefix + currentLvl;
             const previousBest = localStorage.getItem(storageKey);
             
-            // Only save best time if all 8 were correct
             if (correctCount === 8) {
                 if (!previousBest || clock < parseInt(previousBest)) {
                     localStorage.setItem(storageKey, clock);
                     document.getElementById('new-best-msg').style.display = 'block';
                 }
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             } else {
                 document.getElementById('new-best-msg').style.display = 'none';
             }
 
-            if(correctCount === 8) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            
             setTimeout(() => {
                 document.getElementById('game-board').style.display = 'none';
                 document.getElementById('game-stats').style.display = 'none';
-                document.getElementById('final-score').innerText = `Score: ${correctCount} / 8`;
+                document.getElementById('final-score').innerText = `${correctCount} / 8 Correct`;
                 document.getElementById('final-time').innerText = `Time: ${formatTime(clock)}`;
                 document.getElementById('win-modal').style.display = 'flex';
             }, 800);
