@@ -13,6 +13,7 @@
             --gold: #b8860b;
             --paper: #0d1b2a;
             --green: #27ae60;
+            --red: #e74c3c;
             --orange: #e67e22;
         }
 
@@ -84,6 +85,7 @@
         }
 
         .name-slot.correct { background: var(--green) !important; border: 2px solid #fff; }
+        .name-slot.wrong { background: var(--red) !important; border: 2px solid #fff; }
 
         .big-audio-btn {
             width: 42px; height: 42px; background: var(--gold); border-radius: 50%;
@@ -96,7 +98,7 @@
         .btn-main {
             background: var(--gold); color: white; border: none;
             padding: 10px; border-radius: 10px; font-weight: bold;
-            box-shadow: 0 4px 0 #8c6608; min-width: 130px;
+            box-shadow: 0 4px 0 #8c6608; min-width: 140px;
         }
 
         .best-score-label {
@@ -126,10 +128,10 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%; max-width:400px;">
-            <button class="btn-main" onclick="startLevel(1)">Lvl 1 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Lvl 2 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Lvl 3 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Lvl 4 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(1)">Level 1 <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level 2 <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level 3 <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level 4 <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
@@ -145,10 +147,11 @@
     </div>
 
     <div id="win-modal" class="screen" style="display:none;">
-        <h1 style="color: var(--gold); font-size: 3rem; margin:0;">EXCELLENT!</h1>
-        <h2 style="margin-top:0;">כל הכבוד</h2>
+        <h1 id="win-title" style="color: var(--gold); font-size: 3rem; margin:0;">FINISH!</h1>
+        <h2 id="win-title-he" style="margin-top:0;">סיימת את המשחק</h2>
+        <p id="final-score" style="font-size: 1.5rem; font-weight: bold;"></p>
         <p id="final-time"></p>
-        <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW BEST! / שיא חדש!</p>
+        <p id="new-best-msg" style="color:#f1c40f; font-weight:bold; display:none;">NEW BEST TIME! / שיא זמן חדש!</p>
         <button class="btn-main" onclick="location.reload()" style="padding: 20px 40px;">PLAY AGAIN / לשחק שוב</button>
     </div>
 
@@ -160,7 +163,7 @@
             4: [{e:"🇪🇬", n:"Egypt", h:"מצרים"}, {e:"🇬🇷", n:"Greece", h:"יוון"}, {e:"🇨🇾", n:"Cyprus", h:"קפריסין"}, {e:"🇫🇷", n:"France", h:"צרפת"}, {e:"🇮🇳", n:"India", h:"הודו"}, {e:"🇨🇭", n:"Switzerland", h:"שוויץ"}, {e:"🇳🇱", n:"Netherlands", h:"הולנד"}, {e:"🇱🇹", n:"Lithuania", h:"ליטא"}]
         };
 
-        let currentLvl = 1, solved = 0, clock = 0, timerRef = null, isChallenge = false;
+        let currentLvl = 1, solved = 0, correctCount = 0, clock = 0, timerRef = null, isChallenge = false;
 
         function updateBestScoresDisplay() {
             const challenge = document.getElementById('challenge-toggle').checked;
@@ -187,6 +190,7 @@
             const flagCol = document.getElementById('flag-col');
             const nameCol = document.getElementById('name-col');
             flagCol.innerHTML = ''; nameCol.innerHTML = '';
+            solved = 0; correctCount = 0; clock = 0;
             
             timerRef = setInterval(() => {
                 clock++;
@@ -224,21 +228,31 @@
             document.onpointerup = (ev) => {
                 if(!dragEl) return;
                 const slots = document.getElementsByClassName('name-slot');
-                let found = false;
+                let placed = false;
                 for (let s of slots) {
                     const r = s.getBoundingClientRect();
                     if (ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) {
-                        if (s.dataset.n === dragEl.dataset.n && !s.classList.contains('correct')) {
-                            s.classList.add('correct');
+                        if (!s.classList.contains('occupied')) {
+                            s.classList.add('occupied');
+                            const isCorrect = s.dataset.n === dragEl.dataset.n;
+                            
+                            if (isCorrect) {
+                                s.classList.add('correct');
+                                correctCount++;
+                            } else {
+                                s.classList.add('wrong');
+                            }
+
                             s.innerHTML = `<span style="font-size:1.4rem;">${dragEl.innerText}</span><span style="font-weight:400;opacity:0.8;">${s.dataset.h}</span><span>${s.dataset.n}</span>`;
-                            dragEl.remove(); solved++;
+                            dragEl.remove();
+                            solved++;
                             document.getElementById('score-display').innerText = `${solved}/8`;
                             if (solved === 8) endGame();
-                            found = true; break;
+                            placed = true; break;
                         }
                     }
                 }
-                if (!found) { dragEl.style.transition = "transform 0.3s"; dragEl.style.transform = "translate(0,0)"; }
+                if (!placed) { dragEl.style.transition = "transform 0.3s"; dragEl.style.transform = "translate(0,0)"; }
                 dragEl = null; document.onpointermove = null; document.onpointerup = null;
             };
         }
@@ -249,21 +263,27 @@
             const storageKey = prefix + currentLvl;
             const previousBest = localStorage.getItem(storageKey);
             
-            if (!previousBest || clock < parseInt(previousBest)) {
-                localStorage.setItem(storageKey, clock);
-                document.getElementById('new-best-msg').style.display = 'block';
+            // Only save best time if all 8 were correct
+            if (correctCount === 8) {
+                if (!previousBest || clock < parseInt(previousBest)) {
+                    localStorage.setItem(storageKey, clock);
+                    document.getElementById('new-best-msg').style.display = 'block';
+                }
+            } else {
+                document.getElementById('new-best-msg').style.display = 'none';
             }
 
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            if(correctCount === 8) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            
             setTimeout(() => {
                 document.getElementById('game-board').style.display = 'none';
                 document.getElementById('game-stats').style.display = 'none';
+                document.getElementById('final-score').innerText = `Score: ${correctCount} / 8`;
                 document.getElementById('final-time').innerText = `Time: ${formatTime(clock)}`;
                 document.getElementById('win-modal').style.display = 'flex';
             }, 800);
         }
 
-        // Initialize display
         updateBestScoresDisplay();
     </script>
 </body>
