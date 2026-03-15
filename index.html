@@ -41,6 +41,8 @@
             color: white; text-align: center; padding: 20px;
         }
 
+        .lang-sub { display: block; font-size: 0.8rem; font-weight: 400; opacity: 0.9; }
+
         .instruction-box {
             background: rgba(255,255,255,0.1);
             padding: 15px; border-radius: 12px; margin: 15px 0;
@@ -145,10 +147,10 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%; max-width:420px;">
-            <button class="btn-main" onclick="startLevel(1)">Level One <span id="best-1" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(2)">Level Two <span id="best-2" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(3)">Level Three <span id="best-3" class="best-score-label"></span></button>
-            <button class="btn-main" onclick="startLevel(4)">Level Four <span id="best-4" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(1)">Level One <span class="lang-sub">שלב 1</span><span id="best-1" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(2)">Level Two <span class="lang-sub">שלב 2</span><span id="best-2" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(3)">Level Three <span class="lang-sub">שלב 3</span><span id="best-3" class="best-score-label"></span></button>
+            <button class="btn-main" onclick="startLevel(4)">Level Four <span class="lang-sub">שלב 4</span><span id="best-4" class="best-score-label"></span></button>
         </div>
     </div>
 
@@ -298,7 +300,6 @@
         }
 
         function finalizeSlot(slot, flag) {
-            // Updated: English Name (N) is now bold/gold, Hebrew (H) is smaller/secondary
             slot.innerHTML = `<span style="font-size:1.4rem;">${flag.innerText}</span>
                               <div style="display:flex; flex-direction:column; align-items:flex-end;">
                                 <span style="font-size:1.2rem; font-weight:800; color:#f1c40f; line-height:1;">${slot.dataset.n}</span>
@@ -314,7 +315,6 @@
             clearInterval(timerRef);
             const storageKey = 'best_challenge_' + currentLvl;
             
-            // Tiered feedback logic
             let en = "", he = "";
             if (correctCount === 8) { en = "AMAZING!"; he = "מדהים!"; }
             else if (correctCount >= 5) { en = "GREAT JOB!"; he = "כל הכבוד!"; }
